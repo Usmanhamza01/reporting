@@ -1,0 +1,17 @@
+{
+  "name": "Pilotage Chef Comptable",
+  "short_name": "Chef Comptable",
+  "description": "Clôture J+10 par activité, consolidation du groupe, indicateurs comptables et rapports pour le DFC et la Direction.",
+  "lang": "fr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f2f7f3",
+  "theme_color": "#13804b",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
