@@ -1,0 +1,1295 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#13804b">
+<meta name="description" content="Clôture J+10, indicateurs comptables, suivi de l’équipe et rapports pour le DFC et la Direction.">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/png" href="./favicon.png">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Chef Comptable">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Pilotage Chef Comptable</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout : un registre de clôture — bandeau d'en-tête sobre, onglets façon classeur, contenu en colonnes de grand livre. */
+:root{
+  --ink:#14211d;          /* texte principal, encre vert-noir */
+  --paper:#f2f7f3;        /* fond légèrement verdi */
+  --sheet:#ffffff;        /* surfaces */
+  --rule:#dfe6e2;         /* filets */
+  --muted:#5b6b65;        /* texte secondaire */
+  --faint:#8c9a95;
+  --ledger:#13804b;       /* vert de l’entreprise (modifiable dans Réglages) */
+  --ledger-soft:color-mix(in srgb,var(--ledger) 13%,var(--sheet));
+  --band:var(--ledger);   /* bandeau d’en-tête */
+  --on-band:#ffffff;
+  --s1:var(--ledger); --s2:#eb6834; --s3:#2a78d6;   /* séries de graphiques (palette validée daltonisme) */
+  --ok:#1f7a45; --ok-bg:#e4f4ea;
+  --warn:#a35a00; --warn-bg:#fdf1dc;
+  --bad:#b42318; --bad-bg:#fdebe9;
+  --font-display:'Archivo',ui-sans-serif,system-ui,sans-serif;
+  --font-body:'IBM Plex Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-data:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --ink:#e6eeea;--paper:#0f1513;--sheet:#161e1b;--rule:#26322e;--muted:#a3b2ac;--faint:#73827c;
+  --ledger:#2fae6c;--band:#145c38;--s1:var(--ledger);--s2:#d95926;--s3:#3987e5;--ok:#5fd38f;--ok-bg:#163223;--warn:#f0b259;--warn-bg:#3a2a12;--bad:#ff8a7e;--bad-bg:#3d1b18;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --ink:#e6eeea;--paper:#0f1513;--sheet:#161e1b;--rule:#26322e;--muted:#a3b2ac;--faint:#73827c;
+  --ledger:#2fae6c;--band:#145c38;--s1:var(--ledger);--s2:#d95926;--s3:#3987e5;--ok:#5fd38f;--ok-bg:#163223;--warn:#f0b259;--warn-bg:#3a2a12;--bad:#ff8a7e;--bad-bg:#3d1b18;color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--font-body);font-size:14.5px;line-height:1.5}
+.wrap{margin:0;padding-left:max(clamp(16px,2vw,28px),env(safe-area-inset-left,0px));padding-right:max(clamp(16px,2vw,28px),env(safe-area-inset-right,0px));padding-block:0 48px}
+h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+.num,.mono{font-family:var(--font-data);font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ledger);outline-offset:2px}
+
+/* En-tête */
+.band{background:var(--band);color:var(--on-band)}
+.band-in{padding-left:max(clamp(16px,2vw,28px),env(safe-area-inset-left,0px));padding-right:max(clamp(16px,2vw,28px),env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--band)}
+.wrap{padding-top:22px!important}
+.top{padding-block:22px 16px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between}
+.brand .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--on-band);opacity:.78;font-weight:600}
+.brand h1{font-size:clamp(22px,3.4vw,30px);font-weight:800;font-stretch:85%;margin-top:2px}
+.brand .who{color:var(--on-band);opacity:.82;font-size:13.5px;margin-top:2px}
+.period{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:10px;padding:3px}
+.period button{border:0;background:none;padding:6px 11px;border-radius:7px;cursor:pointer;color:var(--on-band)}
+.period button:hover{background:rgba(255,255,255,.18)}
+.band .btn.primary{background:var(--on-band);color:var(--band);border-color:var(--on-band)}
+.period b{font-family:var(--font-display);font-stretch:90%;min-width:150px;text-align:center;font-size:15px}
+.demo{font-size:12px;color:var(--warn);background:var(--warn-bg);border-radius:99px;padding:2px 10px;font-weight:600;white-space:nowrap}
+
+/* Onglets façon intercalaires */
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+@media(min-width:900px){.tabs{flex-wrap:wrap;row-gap:4px}}
+.tabs a{flex:0 0 auto;padding:10px 14px 10px;text-decoration:none;color:var(--on-band);opacity:.8;font-weight:500;font-size:14px;border:1px solid transparent;border-bottom:0;border-radius:8px 8px 0 0;white-space:nowrap;display:flex;gap:7px;align-items:center}
+.tabs a:hover{opacity:1}
+.tabs a.on{background:var(--paper);color:var(--ink);opacity:1;font-weight:600}
+.tabs .cnt{background:var(--bad);color:#fff}
+.tabs .cnt{font-family:var(--font-data);font-size:11px;border-radius:99px;padding:0 6px}
+
+/* Blocs */
+.grid{display:grid;gap:14px}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:900px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g3,.g2{grid-template-columns:1fr}}
+@media(max-width:420px){.g4{grid-template-columns:1fr 1fr}}
+.panel{background:var(--sheet);border:1px solid var(--rule);border-radius:12px;padding:18px;min-width:0}
+.panel h3{font-size:16px;font-weight:700;font-stretch:90%;display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.sub{color:var(--muted);font-size:13px;margin:4px 0 0}
+.sec-title{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:26px 0 10px}
+.stat{padding:16px 18px;background:var(--sheet);border:1px solid var(--rule);border-radius:12px;display:flex;flex-direction:column;gap:4px;min-width:0;text-decoration:none;color:inherit}
+a.stat:hover{border-color:var(--ledger)}
+.stat .l{font-size:12.5px;color:var(--muted)}
+.stat .v{font-family:var(--font-display);font-stretch:85%;font-size:30px;font-weight:800;line-height:1.1}
+.stat .s{font-size:12px;color:var(--faint)}
+.stat.bad .v{color:var(--bad)}.stat.warn .v{color:var(--warn)}.stat.ok .v{color:var(--ok)}
+.bar{height:8px;background:var(--rule);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ledger);border-radius:99px}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;border-radius:99px;padding:2px 9px;white-space:nowrap}
+.chip.ok{background:var(--ok-bg);color:var(--ok)}.chip.warn{background:var(--warn-bg);color:var(--warn)}.chip.bad{background:var(--bad-bg);color:var(--bad)}
+.chip.neutral{background:var(--ledger-soft);color:var(--ledger)}
+.btn{border:1px solid var(--rule);background:var(--sheet);border-radius:8px;padding:7px 13px;cursor:pointer;font-weight:500;font-size:13.5px;color:var(--ink)}
+.btn:hover{border-color:var(--ledger)}
+.btn.primary{background:var(--ledger);border-color:var(--ledger);color:var(--sheet)}
+.btn.danger{color:var(--bad)}
+.btn.sm{padding:4px 10px;font-size:12.5px}
+.row-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input[type=text],input[type=number],input[type=date],select,textarea{border:1px solid var(--rule);background:var(--sheet);border-radius:7px;padding:6px 9px;font-size:13.5px;min-width:0}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--ledger);cursor:pointer;flex:0 0 auto}
+
+/* Listes type grand livre */
+.ledger{width:100%;border-collapse:collapse;font-size:13.5px}
+.ledger th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--rule);white-space:nowrap}
+.ledger td{padding:9px 10px;border-bottom:1px solid var(--rule);vertical-align:middle}
+.ledger tr:last-child td{border-bottom:0}
+.ledger .r{text-align:right}
+.ledger tr.late td:first-child{box-shadow:inset 3px 0 0 var(--bad)}
+.ledger tr.done td{color:var(--muted)}
+.ledger tr.done .t{text-decoration:line-through;text-decoration-color:var(--faint)}
+.scroll{overflow-x:auto;margin:0 -18px;padding:0 18px}
+.acct{font-family:var(--font-data);font-size:12px;color:var(--ledger);background:var(--ledger-soft);border-radius:5px;padding:1px 6px;white-space:nowrap}
+.cycle{margin-top:18px}
+.cycle-h{display:flex;align-items:center;gap:12px;margin-bottom:6px;flex-wrap:wrap}
+.cycle-h h3{font-size:15px}
+.cycle-h .bar{flex:1;min-width:120px;max-width:260px}
+.cycle-h .num{font-size:12.5px;color:var(--muted)}
+.item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px 12px;align-items:center;padding:10px 4px;border-top:1px solid var(--rule)}
+.item:first-of-type{border-top:0}
+.item .t{font-weight:500}
+.item .meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--muted);margin-top:2px}
+.item.done .t{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--faint)}
+.item select{font-size:12.5px;padding:3px 6px}
+.item .due{font-family:var(--font-data);font-size:12px}
+.list{display:flex;flex-direction:column}
+.empty{color:var(--faint);font-style:italic;padding:12px 0}
+.ok-txt{color:var(--ok)}.bad-txt{color:var(--bad)}.warn-txt{color:var(--warn)}
+.note{font-size:12.5px;color:var(--muted);margin-top:10px}
+.report{white-space:pre-wrap;font-family:var(--font-body);font-size:14px;line-height:1.65;background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:18px;max-width:78ch;margin:0}
+.plan-col h3{font-size:22px;font-weight:800;font-stretch:80%;color:var(--ledger)}
+.plan-col h3 small{font-family:var(--font-body);font-size:12.5px;font-weight:500;color:var(--muted);font-stretch:100%}
+.pitem{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--rule)}
+.pitem label{flex:1;cursor:pointer}
+.pitem.done label{color:var(--muted);text-decoration:line-through}
+.addline{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.addline input[type=text]{flex:1 1 200px}
+.confirm{display:inline-flex;gap:6px;align-items:center;font-size:12.5px;color:var(--bad)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:9px;font-size:13.5px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+.foot{margin-top:34px;color:var(--faint);font-size:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media(max-width:640px){.item{grid-template-columns:auto minmax(0,1fr)}.item .right{grid-column:2}.period b{min-width:120px}}
+/* Graphiques et rapport */
+.chart{width:100%;height:auto;display:block;margin-top:8px;overflow:visible}
+.chart .gl{stroke:var(--rule);stroke-width:1}
+.chart .base{stroke:var(--faint);stroke-width:1}
+.chart .ax{fill:var(--muted);font-size:11px;font-family:var(--font-data)}
+.chart .vl{fill:var(--ink);font-size:12px;font-weight:600;font-family:var(--font-data)}
+.chart .refl{stroke:var(--ink);stroke-width:2;stroke-linecap:round}
+.chart .xh{stroke:var(--faint);stroke-width:1;opacity:0}
+.chart .hit:hover .xh{opacity:1}
+.chart .hit{cursor:crosshair}
+.lg{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.lg span{display:inline-flex;align-items:center;gap:6px}
+.lg i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.spark{width:120px;height:34px;margin-top:4px}
+.fin-tiles .stat .s{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.hb{display:flex;flex-direction:column;gap:9px;margin-top:10px}
+.hb-r{display:grid;grid-template-columns:minmax(0,150px) minmax(0,1fr) 62px;gap:10px;align-items:center;font-size:13px}
+.hb-t{height:12px;background:var(--rule);border-radius:3px;overflow:hidden}
+.hb-t i{display:block;height:100%;background:var(--s1);border-radius:0 4px 4px 0}
+.hb-v{text-align:right;color:var(--muted)}
+.tip{position:fixed;z-index:20;background:var(--ink);color:var(--paper);font-size:12.5px;padding:7px 10px;border-radius:7px;max-width:300px;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.tw{overflow-x:auto;max-width:100%}
+.fin-t input{width:74px;text-align:right;padding:4px 6px}
+.fin-t td,.fin-t th{padding:5px 6px}
+.report-doc{background:var(--sheet);border:1px solid var(--rule);border-radius:12px;padding:clamp(18px,4vw,40px)}
+.rp-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;border-bottom:2px solid var(--ink);padding-bottom:16px}
+.rp-head .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ledger);font-weight:700}
+.rp-head h1{font-size:clamp(26px,4vw,38px);font-weight:800;font-stretch:80%;margin-top:4px}
+.rp-sec{margin-top:30px}
+.rp-sec h2{font-size:19px;font-weight:800;font-stretch:85%;display:flex;gap:10px;align-items:baseline;border-bottom:1px solid var(--rule);padding-bottom:8px;margin-bottom:14px}
+.rp-n{font-family:var(--font-data);font-size:13px;color:var(--ledger);font-weight:500}
+.rp-h3{font-size:14px;font-weight:700}
+.rp-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:22px;align-items:start}
+@media(max-width:860px){.rp-grid{grid-template-columns:1fr}}
+.rp-c{max-width:78ch;color:var(--ink);margin:14px 0 0;line-height:1.65}
+.rp-hl{margin-top:16px;background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:14px 18px}
+.rp-hl h3{font-size:14px}
+.rp-hl ul{margin:8px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.rp-hl li{padding-left:14px;position:relative;line-height:1.55;max-width:90ch}
+.rp-hl li::before{content:"";position:absolute;left:0;top:.55em;width:7px;height:7px;border-radius:50%;background:var(--faint)}
+.seg-sw{display:inline-flex;background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg-sw button{border:0;background:none;padding:7px 12px;border-radius:7px;cursor:pointer;font-size:13.5px;color:var(--muted);font-weight:500}
+.seg-sw button.on{background:var(--ledger);color:var(--sheet)}
+.dg-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin-top:22px;border:1px solid var(--rule);border-radius:12px;overflow:hidden}
+.dg-k{padding:18px;display:flex;flex-direction:column;gap:4px;border-left:1px solid var(--rule);min-width:0}
+.dg-k:first-child{border-left:0}
+.dg-k .l{font-size:12.5px;color:var(--muted)}
+.dg-k .v{font-family:var(--font-display);font-stretch:85%;font-size:clamp(24px,3vw,32px);font-weight:800;line-height:1.1}
+.dg-k .s{font-size:12px;color:var(--faint);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+@media(max-width:760px){.dg-grid{grid-template-columns:1fr 1fr}.dg-k:nth-child(3){border-left:0}.dg-k:nth-child(n+3){border-top:1px solid var(--rule)}}
+.dg-l{margin:8px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:6px;line-height:1.55}
+.dg-c{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.rp-act{margin-top:3px;font-size:13px;color:var(--muted)}
+.rp-act span{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--ledger);margin-right:8px}
+.rp-dfc{background:var(--ledger-soft);border-color:transparent}
+.rp-dfc li::before{background:var(--ledger)!important}
+.rp-hl li.bad::before{background:var(--bad)}.rp-hl li.warn::before{background:var(--warn)}.rp-hl li.ok::before{background:var(--ok)}
+.ledger tr.strong td{font-weight:700;border-top:1px solid var(--faint)}
+.rp-foot{margin-top:30px;padding-top:12px;border-top:1px solid var(--rule);font-size:12px;color:var(--faint)}
+@media print{.top,.tabs,.foot,.row-actions,.demo,.cmt{display:none!important}.report-doc{border:0;padding:0}.rp-sec{break-inside:avoid}body{background:#fff}}
+/* Collaboration */
+.as-user{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.as-user select{font-size:12.5px;padding:4px 6px}
+.cmt{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--rule);background:var(--sheet);color:var(--muted);border-radius:99px;padding:3px 9px;font-size:12px;cursor:pointer;white-space:nowrap}
+.cmt:hover{border-color:var(--ledger);color:var(--ledger)}
+.cmt.has{background:var(--ledger-soft);color:var(--ledger);border-color:transparent;font-weight:600}
+.av{--h:150;display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;flex:0 0 auto;font-size:10.5px;font-weight:700;font-family:var(--font-body);
+  background:hsl(var(--h) 45% 88%);color:hsl(var(--h) 55% 24%)}
+:root[data-theme="dark"] .av{background:hsl(var(--h) 30% 26%);color:hsl(var(--h) 60% 85%)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .av{background:hsl(var(--h) 30% 26%);color:hsl(var(--h) 60% 85%)}}
+.scrim{position:fixed;inset:0;background:rgba(10,20,16,.35);z-index:30}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);z-index:31;background:var(--sheet);border-left:1px solid var(--rule);display:flex;flex-direction:column;
+  padding:calc(16px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) 18px;box-shadow:-8px 0 30px rgba(0,0,0,.12)}
+.dr-h{display:flex;gap:10px;justify-content:space-between;align-items:flex-start;border-bottom:1px solid var(--rule);padding-bottom:12px}
+.dr-h .eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ledger);font-weight:700}
+.dr-h h3{font-size:16px;margin-top:2px}
+.dr-list{flex:1;overflow-y:auto;padding:12px 2px;display:flex;flex-direction:column;gap:12px}
+.cm{display:flex;gap:9px;align-items:flex-start}
+.cm-b{background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:8px 11px;min-width:0;flex:1}
+.cm.mine .cm-b{background:var(--ledger-soft);border-color:transparent}
+.cm-m{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted)}
+.cm-m b{color:var(--ink)}
+.cm-t{margin-top:3px;font-size:13.5px;line-height:1.5;overflow-wrap:anywhere}
+.cm-t mark{background:none;color:var(--ledger);font-weight:600}
+.dr-f{border-top:1px solid var(--rule);padding-top:12px}
+.dr-f textarea{width:100%;resize:vertical}
+.feed{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.fd{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;line-height:1.45}
+.fd>div{min-width:0;overflow-wrap:anywhere}
+.fd-t{font-size:11.5px;color:var(--faint);margin-top:1px}
+.fd-dot{width:8px;height:8px;border-radius:50%;background:var(--ledger);margin-top:7px;flex:0 0 auto}
+.tcard{background:var(--sheet);border:1px solid var(--rule);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;cursor:pointer;text-align:left;color:var(--ink)}
+.tcard:hover{border-color:var(--ledger)}
+.tc-h{display:flex;gap:10px;align-items:center}
+.tc-h .av,.mem-h .av{width:40px;height:40px;font-size:14px}
+.tc-k{display:flex;gap:18px;flex-wrap:wrap}
+.tc-k>div{display:flex;flex-direction:column}
+.tc-k .num{font-family:var(--font-display);font-stretch:85%;font-size:22px;font-weight:800;line-height:1.1}
+.tc-k small{font-size:11.5px;color:var(--muted)}
+.mem-h{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.mem-h .av{width:54px;height:54px;font-size:18px}
+.tk-form{display:grid;grid-template-columns:minmax(0,2fr) repeat(3,minmax(0,1fr)) auto;gap:8px;margin-top:10px}
+.tk-form .tk-wide{grid-column:1/-2}
+@media(max-width:760px){.tk-form{grid-template-columns:1fr 1fr}.tk-form #tkTitle,.tk-form .tk-wide{grid-column:1/-1}}
+.tk-d{font-size:13px;color:var(--muted);margin-top:2px}
+.item.tk.is-late{box-shadow:inset 3px 0 0 var(--bad)}
+select.st-bad{color:var(--bad);font-weight:600}
+.item .right{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+</style>
+
+</head>
+<body>
+<div class="band"><div class="band-in">
+  <header class="top">
+    <div class="brand">
+      <div class="eyebrow">Service comptabilité · en appui de la Direction financière</div>
+      <h1 id="hCompany">Pilotage Chef Comptable</h1>
+      <div class="who" id="hWho"></div>
+    </div>
+    <div class="row-actions">
+      <button class="btn sm primary" id="installBtn" hidden>Installer l’application</button>
+      <span class="demo" title="Toutes les données affichées sont des exemples, modifiables">Données d’exemple</span>
+      <div class="period" aria-label="Période de clôture">
+        <button id="pPrev" aria-label="Mois précédent">‹</button><b id="pLbl"></b><button id="pNext" aria-label="Mois suivant">›</button>
+      </div>
+    </div>
+  </header>
+  <nav class="tabs" id="tabs"></nav>
+</div></div>
+<div class="wrap">
+  <main id="view"></main>
+  <div class="foot"><span>Référentiel : SYSCOHADA révisé · montants en FCFA</span><span id="saved"></span></div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<div class="tip" id="tip" hidden></div>
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" hidden aria-label="Notes"></aside>
+
+<script>
+/* ===================== Outils ===================== */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const MOIS=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+const pad=n=>String(n).padStart(2,'0');
+const isoD=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parseD=s=>{const [y,m,d]=String(s).split('-').map(Number);return new Date(y,m-1,d||1);};
+const today=()=>{const d=new Date();d.setHours(0,0,0,0);return d;};
+const pkey=(y,m)=>y+'-'+pad(m);
+const pparse=k=>{const [y,m]=k.split('-').map(Number);return {y,m};};
+const pshift=(k,n)=>{const {y,m}=pparse(k);const d=new Date(y,m-1+n,1);return pkey(d.getFullYear(),d.getMonth()+1);};
+const plabel=k=>{const {y,m}=pparse(k);return MOIS[m-1].replace(/^./,c=>c.toUpperCase())+' '+y;};
+const fmtD=s=>{if(!s)return '—';const d=parseD(s);return pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear();};
+const fmtDs=s=>{if(!s)return '—';const d=parseD(s);return pad(d.getDate())+'/'+pad(d.getMonth()+1);};
+const daysTo=s=>Math.round((parseD(s)-today())/864e5);
+const money=n=>(n==null||n==='')?'—':Math.round(+n).toLocaleString('fr-FR').replace(/ | /g,' ');
+const mshort=n=>{n=Math.abs(+n||0);return n>=1e6?(n/1e6).toLocaleString('fr-FR',{maximumFractionDigits:1})+' M':money(n);};
+const uid=()=>Math.random().toString(36).slice(2,9);
+/* fin du mois + n jours */
+const deadlineOf=(k,n)=>{const {y,m}=pparse(k);const d=new Date(y,m,0);d.setDate(d.getDate()+n);return isoD(d);};
+const dueFiscal=(k,day)=>{const {y,m}=pparse(k);const d=new Date(y,m,Math.min(day,28));d.setDate(day);return isoD(d);};
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('show'),1800);}
+
+/* ===================== Référentiels ===================== */
+/* Checklist de clôture mensuelle — cycles SYSCOHADA, échéance en jours après la fin du mois */
+const CLOSING=[
+ {cycle:'Trésorerie',items:[
+  {id:'tr1',t:'Rapprochements bancaires de tous les comptes',acct:'521',j:5,own:'m2'},
+  {id:'tr2',t:'Arrêté et contrôle de caisse (PV de caisse)',acct:'571',j:2,own:'m2'},
+  {id:'tr3',t:'Virements internes soldés',acct:'585',j:5,own:'m2'}]},
+ {cycle:'Achats et fournisseurs',items:[
+  {id:'ac1',t:'Saisie de toutes les factures fournisseurs du mois',acct:'401',j:3,own:'m1'},
+  {id:'ac2',t:'Factures non parvenues (FNP) comptabilisées',acct:'408',j:6,own:'m1'},
+  {id:'ac3',t:'Lettrage des comptes fournisseurs',acct:'401',j:7,own:'m1'},
+  {id:'ac4',t:'Revue des avances et soldes débiteurs anormaux',acct:'409',j:7,own:'m1'}]},
+ {cycle:'Ventes et clients',items:[
+  {id:'ve1',t:'Facturation du mois complète et comptabilisée',acct:'701 / 411',j:3,own:'m3'},
+  {id:'ve2',t:'Factures à établir (FAE)',acct:'418',j:6,own:'m3'},
+  {id:'ve3',t:'Balance âgée clients et relances',acct:'411',j:7,own:'m3'},
+  {id:'ve4',t:'Dépréciation des créances douteuses',acct:'416 / 491',j:8,own:'m3'}]},
+ {cycle:'Stocks',items:[
+  {id:'st1',t:'Inventaire et valorisation : intrants, produits en cours, produits finis',acct:'31 à 36',j:5,own:'m4'},
+  {id:'st2',t:'Variations de stocks comptabilisées',acct:'603 / 73',j:6,own:'m4'}]},
+ {cycle:'Paie et social',items:[
+  {id:'pa1',t:'Intégration de la paie du mois',acct:'661 / 422',j:3,own:'m4'},
+  {id:'pa2',t:'Charges sociales IPRES et CSS',acct:'431 / 432',j:4,own:'m4'},
+  {id:'pa3',t:'Rapprochement livre de paie / comptabilité',acct:'422',j:5,own:'m4'}]},
+ {cycle:'Immobilisations',items:[
+  {id:'im1',t:'Acquisitions et cessions du mois',acct:'2x',j:5,own:'m4'},
+  {id:'im2',t:'Dotations aux amortissements',acct:'681 / 28',j:6,own:'m4'}]},
+ {cycle:'Fiscalité',items:[
+  {id:'fi1',t:'Rapprochement TVA collectée / déductible / déclarée',acct:'443 / 445',j:8,own:'me'},
+  {id:'fi2',t:'Retenues à la source justifiées',acct:'447',j:8,own:'me'}]},
+ {cycle:'Révision et reporting',items:[
+  {id:'rv1',t:'Charges à payer et charges constatées d’avance',acct:'428 / 476',j:7,own:'me'},
+  {id:'rv2',t:'Comptes d’attente soldés',acct:'471',j:8,own:'me'},
+  {id:'rv3',t:'Revue analytique de la balance (mois vs N-1)',acct:'balance',j:9,own:'me'},
+  {id:'rv4',t:'Reporting mensuel transmis au DFC',acct:'—',j:10,own:'me'}]},
+];
+const ALL_ITEMS=CLOSING.flatMap(c=>c.items.map(i=>({...i,cycle:c.cycle})));
+/* Obligations mensuelles (période M, échéance le jour indiqué de M+1) — modifiables dans Réglages */
+const FISCAL_DEFAULT=[
+ {code:'TVA',lbl:'TVA',day:15,kind:'Fiscal'},
+ {code:'VRS',lbl:'VRS (IR, TRIMF, CFCE)',day:15,kind:'Fiscal'},
+ {code:'BRS',lbl:'BRS (retenues à la source)',day:15,kind:'Fiscal'},
+ {code:'IPRES',lbl:'IPRES',day:15,kind:'Social'},
+ {code:'CSS',lbl:'CSS',day:15,kind:'Social'},
+];
+
+/* ===================== État (données d’exemple) ===================== */
+const KEY='pcc-v5';
+function seedComments(prev,t){
+  const at=(d,h)=>new Date(t.getFullYear(),t.getMonth(),t.getDate()-d,h,12).toISOString();
+  const c={};
+  c['cl:'+prev+':ve4']=[{id:'k1',who:'me',at:at(4,10),txt:'Fatou attend la liste des litiges clients de la direction commerciale.'},
+                       {id:'k2',who:'me',at:at(3,16),txt:'Relance faite. En attendant, calcul préparé sur les créances de plus de 180 jours.'}];
+  c['cl:'+prev+':rv2']=[{id:'k3',who:'me',at:at(2,11),txt:'Trois virements non identifiés en 471 : demander les avis de crédit détaillés à la banque.'}];
+  c['tk:t2']=[{id:'k4',who:'me',at:at(1,9),txt:'Moussa : la banque n’a pas encore envoyé le détail des frais.'},
+              {id:'k5',who:'me',at:at(1,15),txt:'Consigne donnée : écriture provisoire de frais, régularisation à réception du relevé.'}];
+  c['rv:r2']=[{id:'k6',who:'me',at:at(5,14),txt:'Awa a relancé 12 fournisseurs, 5 factures reçues. Extourne à proposer au DFC pour le reste.'}];
+  return c;
+}
+function seedLog(t){
+  const at=(d,h,mi)=>new Date(t.getFullYear(),t.getMonth(),t.getDate()-d,h,mi).toISOString();
+  return [
+    {at:at(0,9,20),who:'me',txt:'Tâche « Mettre à jour la balance âgée clients » (Fatou) : en cours'},
+    {at:at(1,15,2),who:'me',txt:'Note ajoutée : « Justifier l’écart Ecobank de 125 000 »'},
+    {at:at(1,9,5),who:'me',txt:'Tâche « Justifier l’écart Ecobank de 125 000 » (Moussa) : bloquée'},
+    {at:at(2,17,40),who:'me',txt:'« Dotations aux amortissements » validé (Ibrahima)'},
+    {at:at(3,11,8),who:'me',txt:'« Lettrage des comptes fournisseurs » validé (Awa)'},
+    {at:at(4,16,30),who:'me',txt:'Déclaration TVA de la période : déposée'}];
+}
+function seed(){
+  const t=today();const cur=pkey(t.getFullYear(),t.getMonth()+1),prev=pshift(cur,-1),prev2=pshift(cur,-2);
+  const closing={};
+  /* M-2 : clôture terminée */
+  closing[prev2]={};ALL_ITEMS.forEach(i=>closing[prev2][i.id]={done:true,at:deadlineOf(prev2,i.j-1)});
+  /* M-1 : quasi terminée, quatre points ouverts */
+  closing[prev]={};ALL_ITEMS.forEach(i=>{if(!['ve4','rv2','rv3','rv4'].includes(i.id))closing[prev][i.id]={done:true,at:deadlineOf(prev,Math.max(1,i.j-1))};});
+  closing[prev].rv2={done:false,note:'Reste 3,45 M FCFA en 471 à analyser'};
+  const fiscal={};const fdone=(k,amt)=>({done:true,at:dueFiscal(k,13),amount:amt});
+  fiscal[prev2]={TVA:fdone(prev2,18450000),VRS:fdone(prev2,6120000),BRS:fdone(prev2,940000),IPRES:fdone(prev2,4380000),CSS:fdone(prev2,1210000)};
+  fiscal[prev]={TVA:fdone(prev,21730000),VRS:fdone(prev,6245000),BRS:fdone(prev,1105000),IPRES:fdone(prev,4410000),CSS:fdone(prev,1225000)};
+  const banks=[
+    {id:'b1',name:'CBAO — compte courant',acct:'521100'},
+    {id:'b2',name:'Ecobank — compte courant',acct:'521200'},
+    {id:'b3',name:'Banque Islamique — compte d’exploitation',acct:'521300'},
+    {id:'b4',name:'Caisse principale',acct:'571100'}];
+  const rappro={};
+  rappro[prev]={b1:{releve:184250300,compta:184250300,done:true,note:''},
+    b2:{releve:62480150,compta:62355150,done:false,note:'Frais bancaires du mois en attente du relevé'},
+    b3:{releve:15920000,compta:15920000,done:true,note:''},
+    b4:{releve:1835500,compta:1835500,done:true,note:'PV de caisse signé'}};
+  rappro[prev2]={b1:{releve:171400000,compta:171400000,done:true},b2:{releve:58210000,compta:58210000,done:true},b3:{releve:14100000,compta:14100000,done:true},b4:{releve:2210000,compta:2210000,done:true}};
+  return {
+    v:1,company:'',me:'',target:10,period:prev,
+    team:[{id:'me',name:'Chef comptable',role:'Supervision, révision, fiscalité'},
+          {id:'m1',name:'Awa',role:'Comptable fournisseurs',objectives:[{t:'Lettrage fournisseurs à jour le 7 de chaque mois',d:false},{t:'Zéro FNP de plus de 90 jours',d:false}],
+            notes:[{t:'Charge élevée en fin de mois : proposer de répartir la saisie des factures sur la semaine.',at:new Date(t.getFullYear(),t.getMonth(),t.getDate()-6,10).toISOString(),by:'me'}]},
+          {id:'m2',name:'Moussa',role:'Trésorerie',objectives:[{t:'Rapprochements bancaires terminés à J+5',d:true},{t:'Position bancaire quotidienne transmise au DFC',d:false}],
+            notes:[{t:'Formation souhaitée sur le module banque du logiciel comptable.',at:new Date(t.getFullYear(),t.getMonth(),t.getDate()-13,11).toISOString(),by:'me'}]},
+          {id:'m3',name:'Fatou',role:'Clients et ventes',objectives:[{t:'Balance âgée transmise chaque lundi',d:false}],notes:[]},
+          {id:'m4',name:'Ibrahima',role:'Paie, stocks et immobilisations',objectives:[{t:'Inventaire de fin d’année planifié',d:true}],notes:[]}],
+    closing,fiscal,fiscalDef:FISCAL_DEFAULT.map(x=>({...x})),
+    annual:[{id:'a1',lbl:'États financiers annuels SYSCOHADA (DSF)',date:(t.getFullYear()+1)+'-04-30',done:false},
+            {id:'a2',lbl:'Inventaire physique des stocks au 31/12',date:t.getFullYear()+'-12-31',done:false}],
+    banks,rappro,fin:seedFin(prev),user:'me',
+    comments:seedComments(prev,t),log:seedLog(t),
+    review:[
+      {id:'r1',acct:'471000',lbl:'Compte d’attente — encaissements non identifiés',solde:3450000,since:isoD(new Date(t.getFullYear(),t.getMonth()-3,10)),owner:'me',action:'Identifier les clients auprès de la banque',status:'en cours'},
+      {id:'r2',acct:'408100',lbl:'Factures non parvenues anciennes',solde:12300000,since:isoD(new Date(t.getFullYear(),t.getMonth()-4,30)),owner:'m1',action:'Relancer les fournisseurs, extourner si nécessaire',status:'à faire'},
+      {id:'r3',acct:'401',lbl:'Fournisseurs à solde débiteur',solde:2150000,since:isoD(new Date(t.getFullYear(),t.getMonth()-2,5)),owner:'m1',action:'Lettrer avoirs et acomptes',status:'en cours'},
+      {id:'r4',acct:'411',lbl:'Clients à solde créditeur',solde:780000,since:isoD(new Date(t.getFullYear(),t.getMonth()-1,20)),owner:'m3',action:'Affecter les règlements reçus',status:'à faire'},
+      {id:'r5',acct:'585000',lbl:'Virements de fonds non soldés',solde:500000,since:isoD(new Date(t.getFullYear(),t.getMonth()-1,28)),owner:'m2',action:'Pointer avec relevé Ecobank',status:'à faire'},
+      {id:'r6',acct:'409100',lbl:'Avances fournisseurs non régularisées',solde:4800000,since:isoD(new Date(t.getFullYear(),t.getMonth()-5,15)),owner:'m1',action:'Rapprocher des factures reçues',status:'à faire'}],
+    tasks:[
+      {id:'t1',title:'Mettre à jour la balance âgée clients',desc:'Isoler les créances de plus de 60 jours et préparer la liste de relance.',owner:'m3',due:isoD(new Date(t.getFullYear(),t.getMonth(),t.getDate()+2)),prio:'haute',status:'en cours'},
+      {id:'t2',title:'Justifier l’écart Ecobank de 125 000',desc:'',owner:'m2',due:isoD(new Date(t.getFullYear(),t.getMonth(),t.getDate()-1)),prio:'haute',status:'bloquée'},
+      {id:'t3',title:'Procédure écrite : circuit des factures fournisseurs',desc:'Réception, bon de commande, contrôle, saisie, validation, paiement.',owner:'me',due:isoD(new Date(t.getFullYear(),t.getMonth(),t.getDate()+9)),prio:'normale',status:'à faire'},
+      {id:'t4',title:'Tableau des immobilisations à jour',desc:'',owner:'m4',due:isoD(new Date(t.getFullYear(),t.getMonth(),t.getDate()-6)),prio:'normale',status:'terminée',doneAt:isoD(new Date(t.getFullYear(),t.getMonth(),t.getDate()-7))},
+      {id:'t5',title:'Lettrer les acomptes fournisseurs (409)',desc:'',owner:'m1',due:isoD(new Date(t.getFullYear(),t.getMonth(),t.getDate()+5)),prio:'normale',status:'à faire'}].map(x=>({...x,done:x.status==='terminée',createdBy:'me',createdAt:new Date(t.getFullYear(),t.getMonth(),t.getDate()-8,9).toISOString()})),
+    cac:[
+      {id:'c1',item:'Confirmations bancaires au 31/12',due:t.getFullYear()+'-12-15',status:'à préparer'},
+      {id:'c2',item:'Circularisation clients et fournisseurs',due:t.getFullYear()+'-12-20',status:'à préparer'},
+      {id:'c3',item:'Planning et instructions d’inventaire physique',due:t.getFullYear()+'-12-05',status:'en cours'},
+      {id:'c4',item:'Tableau des immobilisations et des amortissements',due:(t.getFullYear()+1)+'-01-31',status:'en cours'},
+      {id:'c5',item:'États de rapprochement bancaire au 31/12',due:(t.getFullYear()+1)+'-01-15',status:'à préparer'},
+      {id:'c6',item:'Procès-verbaux d’AG et de conseil',due:(t.getFullYear()+1)+'-01-31',status:'transmis'}],
+    plan:{
+      '30':[{t:'Rencontrer chaque comptable et cartographier le processus de clôture actuel',d:false},
+            {t:'Faire l’état des lieux : comptes d’attente, écarts bancaires, retards de saisie',d:false},
+            {t:'Sécuriser le calendrier fiscal et social (aucune pénalité)',d:false}],
+      '60':[{t:'Mettre en place la checklist de clôture à J+10 partagée avec l’équipe',d:false},
+            {t:'Solder les comptes d’attente et régulariser les soldes anormaux',d:false},
+            {t:'Écrire les procédures clés : achats, ventes, paie, trésorerie',d:false}],
+      '90':[{t:'Clôture mensuelle tenue à J+10 et reporting standard au DFC',d:false},
+            {t:'Dossier de révision prêt pour le commissaire aux comptes',d:false},
+            {t:'Automatiser l’intégration des relevés bancaires (outil déjà développé)',d:false}]}
+  };
+}
+let S;
+function migrate(x){
+  x.user='me';x.comments=x.comments||{};x.log=x.log||[];
+  (x.tasks||[]).forEach(t=>{if(!t.status)t.status=t.done?'terminée':'à faire';t.prio=t.prio||'normale';t.desc=t.desc||'';if(t.done&&!t.doneAt)t.doneAt=t.due||'';});
+  (x.team||[]).forEach(m=>{m.objectives=m.objectives||[];m.notes=m.notes||[];});return x;}
+function load(){try{const old=localStorage.getItem('pcc-v4')||localStorage.getItem('pcc-v3');if(old&&!localStorage.getItem(KEY)){const x=JSON.parse(old);if(x&&x.v===1){{const t0=today(),pv=pshift(pkey(t0.getFullYear(),t0.getMonth()+1),-1);x.comments=seedComments(pv,t0);x.log=seedLog(t0);}localStorage.setItem(KEY,JSON.stringify(migrate(x)));}}}catch(e){}
+  try{const r=localStorage.getItem(KEY);if(r){const x=JSON.parse(r);if(x&&x.v===1){if(!x.fin)x.fin=seedFin(pshift(pkey(today().getFullYear(),today().getMonth()+1),-1));return migrate(x);}}}catch(e){}return seed();}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));$('#saved').textContent='Enregistré sur cet appareil';}catch(e){$('#saved').textContent='Modifications non enregistrées (stockage indisponible)';}}
+S=load();
+
+/* ===================== Calculs ===================== */
+const member=id=>S.team.find(m=>m.id===id)||{name:'—',role:''};
+const closingOf=k=>S.closing[k]||(S.closing[k]={});
+function closingStats(k){
+  const st=closingOf(k);const items=ALL_ITEMS.map(i=>({...i,s:st[i.id]||{},due:deadlineOf(k,i.j)}));
+  const done=items.filter(i=>i.s.done);const open=items.filter(i=>!i.s.done);
+  const late=open.filter(i=>daysTo(i.due)<0);
+  return {items,done:done.length,total:items.length,pct:Math.round(done.length/items.length*100),open,late,target:deadlineOf(k,S.target)};
+}
+const fiscalOf=k=>S.fiscal[k]||(S.fiscal[k]={});
+function fiscalRows(k){const f=fiscalOf(k);return S.fiscalDef.map(o=>({...o,s:f[o.code]||{},due:dueFiscal(k,o.day)}));}
+const rapproOf=k=>S.rappro[k]||(S.rappro[k]={});
+function bankRows(k){const r=rapproOf(k);return S.banks.map(b=>{const x=r[b.id]||{};const gap=(x.releve!=null&&x.compta!=null&&x.releve!==''&&x.compta!=='')?(+x.releve)-(+x.compta):null;return {...b,x,gap};});}
+const ageDays=s=>Math.max(0,Math.round((today()-parseD(s))/864e5));
+function reviewStats(){const open=S.review.filter(r=>r.status!=='soldé');return {open,total:open.reduce((a,r)=>a+(+r.solde||0),0),old:open.filter(r=>ageDays(r.since)>90)};}
+function taskStats(){const open=S.tasks.filter(t=>t.status!=='terminée');return {open,late:open.filter(t=>t.due&&daysTo(t.due)<0)};}
+
+/* ===================== Indicateurs financiers (données d’exemple) ===================== */
+const FIN_FIELDS=[
+ ['ca','Chiffre d’affaires','70'],['budget','Budget CA','—'],['achats','Achats consommés','60 (± 603)'],['externes','Services extérieurs','61 / 62'],
+ ['impots','Impôts et taxes','64'],['personnel','Charges de personnel','66'],['dotations','Dotations aux amortissements','681'],['fin','Charges financières','67'],
+ ['stocks','Stocks fin de mois','31 à 36'],['creances','Créances clients TTC','411'],['dettes','Dettes fournisseurs TTC','401'],['treso','Trésorerie nette','52 / 57 − 56']];
+function seedFin(endKey){
+  const SEAS=[1.25,1.15,1.0,0.85,0.75,0.7,0.72,0.78,0.9,1.05,1.2,1.35]; /* campagne agricole : pic de novembre à février */
+  const r=x=>Math.round(x/1e5)*1e5;const out={};
+  for(let i=23;i>=0;i--){const k=pshift(endKey,-i);const {y,m}=pparse(k);const s=SEAS[m-1];
+    const cur=i<12, noise=1+(((m*7+y)%5)-2)/100;
+    const ca=r(640e6*s*(cur?1.08:1)*noise), budget=r(640e6*s*1.12);
+    const achats=r(ca*(0.52+((m%3)-1)*0.01)), externes=r(ca*0.11), impots=r(ca*0.012);
+    const personnel=r(cur?84e6:78e6), dotations=r(cur?33e6:31e6), fin=r(7.5e6);
+    const creances=r(ca*1.18*(1.55+(i<4?0.30*(4-i)/4:0)));       /* délai clients qui se dégrade sur 4 mois */
+    const dettes=r((achats+externes)*1.18*1.35);
+    const stocks=r(ca*(0.95+(s<0.9?0.45:0)));
+    const treso=r(300e6+160e6*s-(i<3?(3-i)*38e6:0));
+    out[k]={ca,budget,achats,externes,impots,personnel,dotations,fin,stocks,creances,dettes,treso};}
+  return out;
+}
+const finOf=k=>(S.fin||{})[k]||null;
+function kpis(k){
+  const f=finOf(k);if(!f)return null;const n=x=>+x||0;
+  const marge=n(f.ca)-n(f.achats),va=marge-n(f.externes),ebe=va-n(f.impots)-n(f.personnel),rex=ebe-n(f.dotations),rcai=rex-n(f.fin);
+  const ca=n(f.ca)||1;
+  return {...f,marge,va,ebe,rex,rcai,
+    tMarge:marge/ca,tVa:va/ca,tEbe:ebe/ca,tRex:rex/ca,tRcai:rcai/ca,tPers:n(f.personnel)/ca,
+    ecartBudget:f.budget?(n(f.ca)-n(f.budget))/n(f.budget):null,
+    dso:n(f.creances)/(ca*1.18)*30,dpo:n(f.dettes)/((n(f.achats)+n(f.externes))*1.18||1)*30,dsi:n(f.stocks)/(n(f.achats)||1)*30,
+    bfr:n(f.stocks)+n(f.creances)-n(f.dettes)};
+}
+const exStart=k=>pparse(k).y+'-01';
+function cumul(k,field){let s=0,c=exStart(k);while(c<=k){const f=finOf(c);if(f)s+=(+f[field]||0);c=pshift(c,1);}return s;}
+function cumulK(k,key){let s=0,c=exStart(k);while(c<=k){const x=kpis(c);if(x)s+=(+x[key]||0);c=pshift(c,1);}return s;}
+const last12=k=>{const a=[];for(let i=11;i>=0;i--)a.push(pshift(k,-i));return a;};
+const M=n=>n==null||isNaN(n)?'—':(n/1e6).toLocaleString('fr-FR',{minimumFractionDigits:1,maximumFractionDigits:1}).replace(/ | /g,' ');
+const P=x=>x==null||isNaN(x)?'—':(x*100).toLocaleString('fr-FR',{minimumFractionDigits:1,maximumFractionDigits:1})+' %';
+const J=x=>x==null||isNaN(x)?'—':Math.round(x)+' j';
+const varPct=(a,b)=>(b&&a!=null)?(a-b)/Math.abs(b):null;
+const vchip=(v,goodUp=true,fmt=P)=>{if(v==null||isNaN(v))return '';const up=v>0;const good=goodUp?up:!up;const z=Math.abs(v)<0.0005;
+  return `<span class="chip ${z?'neutral':good?'ok':'bad'}">${z?'=':up?'▲':'▼'} ${fmt===P?P(Math.abs(v)):fmt(Math.abs(v))}</span>`;};
+const mlabel=k=>{const {y,m}=pparse(k);return MOIS[m-1].slice(0,3).replace('jui','jui').replace(/^./,c=>c.toUpperCase())+(m===1?' '+String(y).slice(2):'');};
+
+/* ---------- Graphiques SVG (aucune librairie) ---------- */
+const CH={w:720,h:250,l:52,r:14,t:16,b:30};
+function niceMax(v){if(v<=0)return 1;const p=Math.pow(10,Math.floor(Math.log10(v)));const s=[1,1.2,1.5,2,2.5,3,4,5,6,8,10].find(x=>x*p>=v);return s*p;}
+function axisY(max,fmt,ticks=4){let g='';for(let i=0;i<=ticks;i++){const v=max*i/ticks;const y=CH.t+(CH.h-CH.t-CH.b)*(1-i/ticks);
+  g+=`<line x1="${CH.l}" x2="${CH.w-CH.r}" y1="${y}" y2="${y}" class="gl"/><text x="${CH.l-8}" y="${y+4}" class="ax" text-anchor="end">${fmt(v)}</text>`;}return g;}
+const yOf=(v,max)=>CH.t+(CH.h-CH.t-CH.b)*(1-v/max);
+/* colonnes réalisé + repère budget (trait) */
+function colChart(keys,real,ref,o={}){
+  const max=niceMax(Math.max(...real,...(ref||[0]))*1.05);const n=keys.length,band=(CH.w-CH.l-CH.r)/n,bw=Math.min(24,band*0.55);
+  let s=`<svg viewBox="0 0 ${CH.w} ${CH.h}" class="chart" role="img" aria-label="${esc(o.aria||'')}">${axisY(max,v=>M(v))}`;
+  keys.forEach((k,i)=>{const cx=CH.l+band*i+band/2,y=yOf(real[i],max),y0=yOf(0,max),hl=i===n-1;
+    const tip=`${plabel(k)} · Réalisé ${M(real[i])} M`+(ref?` · Budget ${M(ref[i])} M · écart ${P(varPct(real[i],ref[i]))}`:'');
+    s+=`<g class="hit" data-tip="${esc(tip)}"><rect x="${cx-band/2}" y="${CH.t}" width="${band}" height="${CH.h-CH.t-CH.b}" fill="transparent"/>
+      <path d="M${cx-bw/2},${y0} V${y+4} q0,-4 4,-4 h${bw-8} q4,0 4,4 V${y0} Z" fill="var(--s1)" opacity="${hl?1:.78}"/>
+      ${ref?`<line x1="${cx-bw/2-5}" x2="${cx+bw/2+5}" y1="${yOf(ref[i],max)}" y2="${yOf(ref[i],max)}" class="refl"/>`:''}</g>
+      <text x="${cx}" y="${CH.h-10}" class="ax" text-anchor="middle">${mlabel(k)}</text>`;
+    if(hl)s+=`<text x="${cx}" y="${y-8}" class="vl" text-anchor="middle">${M(real[i])}</text>`;});
+  return s+`<line x1="${CH.l}" x2="${CH.w-CH.r}" y1="${yOf(0,max)}" y2="${yOf(0,max)}" class="base"/></svg>`;
+}
+/* courbes (1 à 3 séries) */
+function lineChart(keys,series,o={}){
+  const all=series.flatMap(s=>s.v).filter(v=>v!=null);const max=niceMax(Math.max(...all)*1.08);const fmt=o.fmt||(v=>M(v));
+  const n=keys.length,step=(CH.w-CH.l-CH.r)/(n-1),x=i=>CH.l+step*i;
+  let s=`<svg viewBox="0 0 ${CH.w} ${CH.h}" class="chart" role="img" aria-label="${esc(o.aria||'')}">${axisY(max,fmt)}`;
+  series.forEach((se,si)=>{const pts=se.v.map((v,i)=>[x(i),yOf(v,max)]);
+    if(series.length===1)s+=`<path d="M${pts[0][0]},${yOf(0,max)} L${pts.map(p=>p.join(',')).join(' L')} L${pts[n-1][0]},${yOf(0,max)} Z" fill="${se.c}" opacity=".10"/>`;
+    s+=`<path d="M${pts.map(p=>p.join(',')).join(' L')}" fill="none" stroke="${se.c}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    const lp=pts[n-1];s+=`<circle cx="${lp[0]}" cy="${lp[1]}" r="4.5" fill="${se.c}" stroke="var(--sheet)" stroke-width="2"/>`;
+    s+=`<text x="${lp[0]-8}" y="${lp[1]-10-(si*0)}" class="vl" text-anchor="end">${o.lblFmt?o.lblFmt(se.v[n-1]):fmt(se.v[n-1])}</text>`;});
+  keys.forEach((k,i)=>{const tip=plabel(k)+' · '+series.map(se=>`${se.n} ${o.lblFmt?o.lblFmt(se.v[i]):fmt(se.v[i])}`).join(' · ');
+    s+=`<g class="hit" data-tip="${esc(tip)}"><rect x="${x(i)-step/2}" y="${CH.t}" width="${step}" height="${CH.h-CH.t-CH.b}" fill="transparent"/><line x1="${x(i)}" x2="${x(i)}" y1="${CH.t}" y2="${CH.h-CH.b}" class="xh"/></g>
+      <text x="${x(i)}" y="${CH.h-10}" class="ax" text-anchor="middle">${mlabel(k)}</text>`;});
+  return s+`<line x1="${CH.l}" x2="${CH.w-CH.r}" y1="${yOf(0,max)}" y2="${yOf(0,max)}" class="base"/></svg>`;
+}
+const legend=items=>`<div class="lg">${items.map(i=>`<span><i style="background:${i.c}${i.line?';height:2px;border-radius:0':''}"></i>${i.n}</span>`).join('')}</div>`;
+/* barres horizontales : structure des charges en % du CA */
+function hbars(items){const max=Math.max(...items.map(i=>i.v),0.0001);
+  return `<div class="hb">${items.map(i=>`<div class="hb-r" data-tip="${esc(i.tip||(i.l+' · '+M(i.a)+' M FCFA · '+P(i.v)+' du CA'))}"><span class="hb-l">${i.l}</span><span class="hb-t"><i style="width:${Math.max(1,i.v/max*100)}%"></i></span><span class="hb-v num">${P(i.v)}</span></div>`).join('')}</div>`;}
+function spark(vals,c='var(--s1)'){const w=120,h=34,mx=Math.max(...vals),mn=Math.min(...vals),rg=mx-mn||1;
+  const pts=vals.map((v,i)=>[(i/(vals.length-1))*(w-6)+3,h-4-((v-mn)/rg)*(h-10)]);
+  return `<svg viewBox="0 0 ${w} ${h}" class="spark" aria-hidden="true"><path d="M${pts.map(p=>p.join(',')).join(' L')}" fill="none" stroke="${c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${pts[pts.length-1][0]}" cy="${pts[pts.length-1][1]}" r="3.5" fill="${c}"/></svg>`;}
+/* infobulle commune */
+function bindTips(){const tip=$('#tip');$$('#view [data-tip]').forEach(el=>{
+  el.onmousemove=e=>{tip.textContent=el.dataset.tip;tip.hidden=false;const x=Math.min(e.clientX+14,innerWidth-tip.offsetWidth-8);tip.style.left=x+'px';tip.style.top=(e.clientY+14)+'px';};
+  el.onmouseleave=()=>{tip.hidden=true;};
+  el.onclick=()=>{toast(el.dataset.tip);};});}
+
+/* ---------- Points d’attention (règles) ---------- */
+function attention(k){
+  /* t = constat chiffré ; act = ce que fait le service comptable ; dfc = point remonté pour analyse ou décision du DFC */
+  const x=kpis(k),p=kpis(pshift(k,-1)),p3=kpis(pshift(k,-3));const out=[];if(!x)return out;
+  const caY=cumul(k,'ca'),buY=cumul(k,'budget'),eY=varPct(caY,buY);
+  if(x.ecartBudget!=null)out.push({lvl:x.ecartBudget<-0.03?'warn':'ok',t:`Chiffre d’affaires du mois : ${P(x.ecartBudget)} par rapport au budget ; cumul : ${P(eY)}`,act:'',dfc:x.ecartBudget<-0.03||eY<-0.03?'Écart transmis pour votre analyse budgétaire.':''});
+  if(p3&&x.dso-p3.dso>3)out.push({lvl:'bad',t:`Délai de paiement clients : ${J(x.dso)}, soit +${Math.round(x.dso-p3.dso)} j en 3 mois (environ ${M((x.dso-p3.dso)/30*x.ca*1.18)} M FCFA d’encours supplémentaire)`,
+    act:'Balance âgée mise à jour et jointe ; relances comptables des factures échues envoyées.',dfc:'Relances commerciales et conditions de paiement des clients concernés.'});
+  if(p&&varPct(x.treso,p.treso)<-0.08)out.push({lvl:'warn',t:`Trésorerie nette en baisse de ${P(-varPct(x.treso,p.treso))} sur le mois (${M(x.treso)} M FCFA)`,act:'Positions bancaires rapprochées et détaillées par compte.',dfc:'Élément pour votre prévision de trésorerie.'});
+  if(x.dsi>60)out.push({lvl:'warn',t:`Stocks à ${J(x.dsi)} de consommation`,act:'Préparation de l’inventaire physique et liste des articles à faible rotation.',dfc:''});
+  if(x.tEbe>=0.18)out.push({lvl:'ok',t:`EBE du mois : ${P(x.tEbe)} du chiffre d’affaires`,act:'',dfc:''});
+  const rs=reviewStats();if(rs.old.length)out.push({lvl:'bad',t:`${rs.old.length} compte(s) à justifier de plus de 90 jours : ${M(rs.old.reduce((a,r)=>a+(+r.solde||0),0))} M FCFA`,
+    act:'Plan de régularisation en cours, compte par compte.',dfc:'Validation des extournes et régularisations proposées avant la clôture annuelle.'});
+  const gaps=bankRows(k).filter(b=>b.gap);if(gaps.length)out.push({lvl:'warn',t:`Écart bancaire non soldé : ${gaps.map(b=>money(b.gap)+' F sur '+b.name.split(' —')[0]).join(', ')}`,act:gaps.map(b=>b.x.note).filter(Boolean).join(' ; ')||'Analyse en cours.',dfc:''});
+  const cs=closingStats(k);if(cs.late.length)out.push({lvl:'bad',t:`${cs.late.length} point(s) de clôture en retard sur l’objectif J+${S.target}`,act:'Finalisation en cours : '+cs.late.map(i=>i.t).join(' ; ')+'.',dfc:''});
+  return out.sort((a,b)=>({bad:0,warn:1,ok:2}[a.lvl]-{bad:0,warn:1,ok:2}[b.lvl]));
+}
+
+/* ===================== Vue : indicateurs financiers ===================== */
+function finTiles(k){
+  const x=kpis(k),p=kpis(pshift(k,-1)),ks=last12(k),K=ks.map(kpis);if(!x)return '';
+  const t=(l,v,ch,sp,s)=>`<div class="stat"><span class="l">${l}</span><span class="v num">${v}</span><span class="s">${ch} ${s||''}</span>${sp}</div>`;
+  return `<div class="grid g3 fin-tiles">
+    ${t('Chiffre d’affaires du mois',M(x.ca)+' M',vchip(varPct(x.ca,p&&p.ca)),spark(K.map(z=>z?z.ca:0)),`budget ${P(x.ecartBudget)}`)}
+    ${t('Excédent brut d’exploitation',P(x.tEbe),vchip(p?x.tEbe-p.tEbe:null),spark(K.map(z=>z?z.tEbe:0)),M(x.ebe)+' M FCFA')}
+    ${t('Trésorerie nette',M(x.treso)+' M',vchip(varPct(x.treso,p&&p.treso)),spark(K.map(z=>z?z.treso:0)),'vs mois précédent')}
+    ${t('Délai clients (DSO)',J(x.dso),vchip(p?(x.dso-p.dso)/30:null,false,v=>Math.round(v*30)+' j'),spark(K.map(z=>z?z.dso:0),'var(--s3)'),'créances TTC / CA TTC')}
+    ${t('Délai fournisseurs (DPO)',J(x.dpo),vchip(p?(x.dpo-p.dpo)/30:null,true,v=>Math.round(v*30)+' j'),spark(K.map(z=>z?z.dpo:0),'var(--s2)'),'')}
+    ${t('Besoin en fonds de roulement',M(x.bfr)+' M',vchip(varPct(x.bfr,p&&p.bfr),false),spark(K.map(z=>z?z.bfr:0)),Math.round(x.bfr/(x.ca||1)*30)+' j de CA')}
+  </div>`;
+}
+function vIndicateurs(){
+  const k=S.period,ks=last12(k);
+  if(!finOf(k)){$('#view').innerHTML=`<section class="panel"><h3>Aucune donnée financière pour ${plabel(k).toLowerCase()}</h3><p class="sub">Saisissez les montants du mois dans le tableau ci-dessous.</p></section>`+finTable(ks);bindFinTable();return;}
+  const K=ks.map(kpis);
+  $('#view').innerHTML=`
+    <p class="sub" style="margin:0 0 12px">Indicateurs calculés à partir des comptes clôturés, mis à disposition de la Direction financière.</p>
+    ${finTiles(k)}
+    <div class="grid g2" style="margin-top:14px">
+      <section class="panel"><h3>Chiffre d’affaires et budget</h3><p class="sub">12 derniers mois, en millions de FCFA. Le trait indique le budget.</p>
+        ${legend([{n:'Réalisé',c:'var(--s1)'},{n:'Budget',c:'var(--ink)',line:1}])}${colChart(ks,K.map(z=>z?z.ca:0),K.map(z=>z?z.budget:0),{aria:'CA réalisé et budget'})}</section>
+      <section class="panel"><h3>Trésorerie nette</h3><p class="sub">Fin de mois, en millions de FCFA.</p>${lineChart(ks,[{n:'Trésorerie',v:K.map(z=>z?z.treso:0),c:'var(--s1)'}],{aria:'Trésorerie'})}</section>
+      <section class="panel"><h3>Délais clients et fournisseurs</h3><p class="sub">En jours.</p>${legend([{n:'Clients (DSO)',c:'var(--s3)'},{n:'Fournisseurs (DPO)',c:'var(--s2)'}])}
+        ${lineChart(ks,[{n:'DSO',v:K.map(z=>z?z.dso:0),c:'var(--s3)'},{n:'DPO',v:K.map(z=>z?z.dpo:0),c:'var(--s2)'}],{fmt:v=>Math.round(v)+'',lblFmt:v=>Math.round(v)+' j',aria:'DSO et DPO'})}</section>
+      <section class="panel"><h3>Taux d’EBE</h3><p class="sub">Excédent brut d’exploitation en % du chiffre d’affaires.</p>
+        ${lineChart(ks,[{n:'EBE',v:K.map(z=>z?z.tEbe*100:0),c:'var(--s1)'}],{fmt:v=>Math.round(v)+' %',lblFmt:v=>v.toFixed(1).replace('.',',')+' %',aria:'Taux EBE'})}</section>
+    </div>
+    <div class="sec-title">Données mensuelles (millions de FCFA)</div>
+    ${finTable(ks)}`;
+  bindTips();bindFinTable();
+}
+function finTable(ks){
+  return `<section class="panel"><p class="sub" style="margin:0 0 10px">Saisie en millions de FCFA, une colonne par mois. Les indicateurs et le rapport se recalculent aussitôt.</p>
+    <div class="scroll"><table class="ledger fin-t"><thead><tr><th>Rubrique</th><th>Comptes</th>${ks.map(k=>`<th class="r">${mlabel(k)}</th>`).join('')}</tr></thead><tbody>
+    ${FIN_FIELDS.map(([f,l,a])=>`<tr><td><b>${l}</b></td><td><span class="acct">${a}</span></td>${ks.map(k=>{const v=(finOf(k)||{})[f];
+      return `<td class="r"><input type="number" step="0.1" class="num" data-fk="${k}" data-ff="${f}" value="${v==null?'':(v/1e6).toFixed(1)}" aria-label="${l} ${plabel(k)}"></td>`;}).join('')}</tr>`).join('')}
+    </tbody></table></div></section>`;
+}
+function bindFinTable(){$$('#view [data-fk]').forEach(inp=>inp.onchange=()=>{S.fin=S.fin||{};const f=S.fin[inp.dataset.fk]=S.fin[inp.dataset.fk]||{};
+  f[inp.dataset.ff]=inp.value===''?null:Math.round(parseFloat(inp.value.replace(',','.'))*1e6);save();render();toast('Montant enregistré');});}
+
+/* ===================== Vue : rapport mensuel de gestion ===================== */
+let repMode='dfc';
+const repSwitch=()=>`<div class="seg-sw" role="tablist">${[['dfc','Reporting détaillé · DFC'],['dg','Synthèse · Direction générale']].map(([v,l])=>`<button role="tab" aria-selected="${repMode===v}" class="${repMode===v?'on':''}" data-rep="${v}">${l}</button>`).join('')}</div>`;
+function bindRepSwitch(){$$('#view [data-rep]').forEach(b=>b.onclick=()=>{repMode=b.dataset.rep;render();});}
+function vRapport(){
+  if(repMode==='dg')return vSynthese();
+  const k=S.period,x=kpis(k),p=kpis(pshift(k,-1)),n1=kpis(pshift(k,-12)),ks=last12(k),K=ks.map(kpis);
+  const per=plabel(k).toLowerCase(),cs=closingStats(k),fr=fiscalRows(k),br=bankRows(k),rs=reviewStats(),ts=taskStats();
+  if(!x){$('#view').innerHTML=`<section class="panel"><h3>Données financières manquantes</h3><p class="sub">Saisissez les montants de ${per} dans l’onglet Indicateurs.</p></section>`;return;}
+  const caY=cumul(k,'ca'),buY=cumul(k,'budget'),n1Y=cumul(pshift(k,-12),'ca'),ebeY=cumulK(k,'ebe'),rcaiY=cumulK(k,'rcai');
+  const att=attention(k);
+  const sig=[['Chiffre d’affaires','ca'],['Marge brute','marge'],['Valeur ajoutée','va'],['Excédent brut d’exploitation','ebe'],['Résultat d’exploitation','rex'],['Résultat courant avant impôt','rcai']];
+  const charges=[['Achats consommés','achats'],['Services extérieurs','externes'],['Personnel','personnel'],['Dotations','dotations'],['Impôts et taxes','impots'],['Charges financières','fin']].map(([l,f])=>({l,a:x[f],v:x[f]/x.ca}));
+  const fd=fr.filter(r=>r.s.done),tf=fr.reduce((a,r)=>a+(+r.s.amount||0),0);
+  const sec=(n,t,body)=>`<section class="rp-sec"><h2><span class="rp-n">${n}</span>${t}</h2>${body}</section>`;
+  const comment=s=>`<p class="rp-c">${s}</p>`;
+  $('#view').innerHTML=`
+  <div class="row-actions" style="justify-content:space-between;margin-bottom:12px">${repSwitch()}<div class="row-actions">
+    <button class="btn" id="cpy">Copier le texte du rapport</button>${window.self===window.top?'<button class="btn primary" id="prt">Imprimer / PDF</button>':''}</div>
+  </div>
+  <article class="report-doc" id="repDoc">
+    <header class="rp-head">
+      <div><div class="eyebrow">Reporting comptable mensuel</div><h1>${plabel(k)}</h1>
+      <div class="sub">${S.company?esc(S.company)+' · ':''}À l’attention du Directeur financier et comptable · données issues de la clôture, pour son analyse · établi le ${fmtD(isoD(today()))}${S.me?' par '+esc(S.me)+', chef comptable':''}</div></div>
+      <span class="demo">Chiffres d’exemple</span>
+    </header>
+
+    ${sec('1','Synthèse',`
+      ${finTiles(k)}
+      <div class="rp-hl"><h3>Constats de la clôture</h3><ul>${att.map(a=>`<li class="${a.lvl}"><b>${esc(a.t)}.</b>${a.act?`<div class="rp-act"><span>Action comptable</span>${esc(a.act)}</div>`:''}</li>`).join('')}</ul></div>
+      ${att.some(a=>a.dfc)?`<div class="rp-hl rp-dfc"><h3>Points remontés au DFC</h3><p class="sub" style="margin:2px 0 8px">Pour analyse ou décision. Le service comptable fournit les éléments détaillés sur demande.</p><ul>${att.filter(a=>a.dfc).map(a=>`<li class="neutral"><b>${esc(a.dfc)}</b> <span class="sub">(${esc(a.t.split(' :')[0].split(' (')[0])})</span></li>`).join('')}</ul></div>`:''}`)}
+
+    ${sec('2','Activité',`
+      <div class="rp-grid"><div>${legend([{n:'Réalisé',c:'var(--s1)'},{n:'Budget',c:'var(--ink)',line:1}])}${colChart(ks,K.map(z=>z?z.ca:0),K.map(z=>z?z.budget:0),{aria:'CA et budget'})}</div>
+      <div><div class="tw"><table class="ledger"><thead><tr><th></th><th class="r">Mois</th><th class="r">Cumul ${pparse(k).y}</th></tr></thead><tbody>
+        <tr><td>Chiffre d’affaires</td><td class="r num">${M(x.ca)}</td><td class="r num">${M(caY)}</td></tr>
+        <tr><td>Budget</td><td class="r num">${M(x.budget)}</td><td class="r num">${M(buY)}</td></tr>
+        <tr><td>Écart / budget</td><td class="r">${vchip(x.ecartBudget)}</td><td class="r">${vchip(varPct(caY,buY))}</td></tr>
+        <tr><td>Même période N-1</td><td class="r num">${n1?M(n1.ca):'—'}</td><td class="r num">${M(n1Y)}</td></tr>
+        <tr><td>Évolution / N-1</td><td class="r">${vchip(n1?varPct(x.ca,n1.ca):null)}</td><td class="r">${vchip(varPct(caY,n1Y))}</td></tr>
+      </tbody></table></div><p class="note">En millions de FCFA, hors taxes.</p></div></div>
+      ${comment(`Le chiffre d’affaires de ${per} s’établit à ${M(x.ca)} M FCFA, ${x.ecartBudget>=0?'au-dessus':'en dessous'} du budget de ${P(Math.abs(x.ecartBudget))} et ${n1&&x.ca>=n1.ca?'en hausse':'en baisse'} de ${n1?P(Math.abs(varPct(x.ca,n1.ca))):'—'} par rapport à ${plabel(pshift(k,-12)).toLowerCase()}. En cumul, le chiffre d’affaires comptabilisé atteint ${M(caY)} M FCFA, soit ${P(caY/buY)} du budget de la période.`)}`)}
+
+    ${sec('3','Rentabilité',`
+      <div class="rp-grid"><div class="tw"><table class="ledger"><thead><tr><th>Soldes intermédiaires de gestion</th><th class="r">${mlabel(k)}</th><th class="r">% CA</th><th class="r">${mlabel(pshift(k,-1))}</th><th class="r">Cumul</th></tr></thead><tbody>
+        ${sig.map(([l,f])=>`<tr class="${f==='ebe'||f==='rcai'?'strong':''}"><td>${l}</td><td class="r num">${M(x[f])}</td><td class="r num">${P(x[f]/x.ca)}</td><td class="r num">${p?M(p[f]):'—'}</td><td class="r num">${M(cumulK(k,f))}</td></tr>`).join('')}
+      </tbody></table></div>
+      <div><h3 class="rp-h3">Structure des charges (% du CA)</h3>${hbars(charges)}</div></div>
+      ${comment(`L’EBE du mois ressort à ${M(x.ebe)} M FCFA, soit ${P(x.tEbe)} du chiffre d’affaires (${p?P(p.tEbe)+' le mois précédent':''}). Le taux de marge brute est de ${P(x.tMarge)}. Les achats consommés représentent ${P(x.achats/x.ca)} du CA et les charges de personnel ${P(x.tPers)}. Le résultat courant avant impôt cumulé atteint ${M(rcaiY)} M FCFA.`)}`)}
+
+    ${sec('4','Trésorerie et besoin en fonds de roulement',`
+      <div class="rp-grid"><div>${lineChart(ks,[{n:'Trésorerie',v:K.map(z=>z?z.treso:0),c:'var(--s1)'}],{aria:'Trésorerie'})}</div>
+      <div><div class="tw"><table class="ledger"><thead><tr><th></th><th class="r">Fin ${mlabel(k)}</th><th class="r">Fin ${mlabel(pshift(k,-1))}</th><th class="r">Variation</th></tr></thead><tbody>
+        <tr><td>Stocks</td><td class="r num">${M(x.stocks)}</td><td class="r num">${p?M(p.stocks):'—'}</td><td class="r num">${p?M(x.stocks-p.stocks):'—'}</td></tr>
+        <tr><td>+ Créances clients</td><td class="r num">${M(x.creances)}</td><td class="r num">${p?M(p.creances):'—'}</td><td class="r num">${p?M(x.creances-p.creances):'—'}</td></tr>
+        <tr><td>− Dettes fournisseurs</td><td class="r num">${M(x.dettes)}</td><td class="r num">${p?M(p.dettes):'—'}</td><td class="r num">${p?M(x.dettes-p.dettes):'—'}</td></tr>
+        <tr class="strong"><td>= BFR d’exploitation</td><td class="r num">${M(x.bfr)}</td><td class="r num">${p?M(p.bfr):'—'}</td><td class="r num">${p?M(x.bfr-p.bfr):'—'}</td></tr>
+        <tr class="strong"><td>Trésorerie nette</td><td class="r num">${M(x.treso)}</td><td class="r num">${p?M(p.treso):'—'}</td><td class="r num">${p?M(x.treso-p.treso):'—'}</td></tr>
+      </tbody></table></div><p class="note">${br.filter(b=>b.x.done).length}/${br.length} comptes bancaires rapprochés au ${fmtD(deadlineOf(k,0))}.</p></div></div>
+      ${comment(`La trésorerie nette s’établit à ${M(x.treso)} M FCFA${p?`, ${x.treso>=p.treso?'en hausse':'en baisse'} de ${M(Math.abs(x.treso-p.treso))} M sur le mois`:''}. Le BFR représente ${Math.round(x.bfr/x.ca*30)} jours de chiffre d’affaires${p?` (${x.bfr>=p.bfr?'+':'−'}${M(Math.abs(x.bfr-p.bfr))} M)`:''}.`)}`)}
+
+    ${sec('5','Délais de paiement et stocks',`
+      <div class="rp-grid"><div>${legend([{n:'Clients (DSO)',c:'var(--s3)'},{n:'Fournisseurs (DPO)',c:'var(--s2)'}])}
+        ${lineChart(ks,[{n:'DSO',v:K.map(z=>z?z.dso:0),c:'var(--s3)'},{n:'DPO',v:K.map(z=>z?z.dpo:0),c:'var(--s2)'}],{fmt:v=>Math.round(v)+'',lblFmt:v=>Math.round(v)+' j',aria:'Délais'})}</div>
+      <div><div class="tw"><table class="ledger"><thead><tr><th>En jours</th><th class="r">${mlabel(k)}</th><th class="r">${mlabel(pshift(k,-1))}</th><th class="r">${mlabel(pshift(k,-3))}</th></tr></thead><tbody>
+        ${[['Délai clients (DSO)','dso',false],['Délai fournisseurs (DPO)','dpo',true],['Rotation des stocks','dsi',false]].map(([l,f])=>{const a=kpis(pshift(k,-3));return `<tr><td>${l}</td><td class="r num"><b>${J(x[f])}</b></td><td class="r num">${p?J(p[f]):'—'}</td><td class="r num">${a?J(a[f]):'—'}</td></tr>`;}).join('')}
+      </tbody></table></div><p class="note">DSO = créances TTC / CA TTC × 30 ; DPO = dettes fournisseurs TTC / (achats + services extérieurs) TTC × 30 ; stocks en jours d’achats consommés.</p></div></div>`)}
+
+    ${sec('6','Clôture, conformité fiscale et contrôle interne',`
+      <div class="grid g4">
+        <div class="stat ${cs.late.length?'bad':'ok'}"><span class="l">Clôture</span><span class="v num">${cs.pct} %</span><span class="s">${cs.done}/${cs.total} points · ${cs.late.length} en retard</span></div>
+        <div class="stat ${fd.length===fr.length?'ok':'warn'}"><span class="l">Déclarations</span><span class="v num">${fd.length}/${fr.length}</span><span class="s">${M(tf)} M FCFA versés</span></div>
+        <div class="stat ${br.every(b=>!b.gap)?'ok':'warn'}"><span class="l">Rapprochements</span><span class="v num">${br.filter(b=>b.x.done).length}/${br.length}</span><span class="s">${br.filter(b=>b.gap).length} écart(s)</span></div>
+        <div class="stat ${rs.old.length?'bad':'ok'}"><span class="l">Comptes à justifier</span><span class="v num">${M(rs.total)} M</span><span class="s">${rs.old.length} de plus de 90 jours</span></div>
+      </div>
+      <div class="tw"><table class="ledger" style="margin-top:12px"><thead><tr><th>Obligation</th><th>Échéance</th><th class="r">Montant</th><th>Statut</th></tr></thead><tbody>
+        ${fr.map(r=>`<tr><td>${esc(r.lbl)}</td><td class="num">${fmtD(r.due)}</td><td class="r num">${r.s.amount?money(r.s.amount):'—'}</td><td>${r.s.done?`<span class="chip ok">Déposée le ${fmtDs(r.s.at)}</span>`:'<span class="chip warn">À déposer</span>'}</td></tr>`).join('')}
+      </tbody></table></div>`)}
+
+    ${sec('7','Actions du service comptable pour le mois prochain',`
+      <div class="tw"><table class="ledger"><thead><tr><th>Action</th><th>Responsable</th><th>Échéance</th></tr></thead><tbody>
+        ${[...cs.open.map(i=>({a:i.t,o:member(ownerOf(k,i)).name,d:i.due})),...ts.open.map(t=>({a:t.title,o:member(t.owner).name,d:t.due})),
+           ...rs.old.map(r=>({a:`Régulariser ${r.acct} — ${r.lbl}`,o:member(r.owner).name,d:''}))].map(a=>`<tr><td>${esc(a.a)}</td><td>${esc(a.o)}</td><td class="num ${a.d&&daysTo(a.d)<0?'bad-txt':''}">${a.d?fmtD(a.d):'avant clôture annuelle'}</td></tr>`).join('')}
+      </tbody></table></div>`)}
+    <footer class="rp-foot">${S.me?esc(S.me)+' · ':''}Chef comptable · Référentiel SYSCOHADA révisé · montants en millions de FCFA sauf mention contraire</footer>
+  </article>`;
+  bindTips();bindRepSwitch();
+  $('#cpy').onclick=async()=>{const t=reportText();try{await navigator.clipboard.writeText(t);toast('Texte du rapport copié');}catch(e){toast('Copie impossible ici : sélectionnez le texte du rapport');}};
+  const pr=$('#prt');if(pr)pr.onclick=()=>window.print();
+}
+
+/* ===================== Commentaires, activité, collaborateurs ===================== */
+const nowISO=()=>new Date().toISOString();
+const fmtTS=s=>{if(!s)return '';const d=new Date(s);return pad(d.getDate())+'/'+pad(d.getMonth()+1)+' '+pad(d.getHours())+':'+pad(d.getMinutes());};
+const ago=s=>{const m=Math.round((Date.now()-new Date(s))/6e4);if(m<1)return 'à l’instant';if(m<60)return 'il y a '+m+' min';const h=Math.round(m/60);if(h<24)return 'il y a '+h+' h';const d=Math.round(h/24);return d===1?'hier':'il y a '+d+' j';};
+const me=()=>member(S.user||'me');
+const initials=n=>String(n||'?').split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+const avatar=id=>{const m=member(id);return `<span class="av" style="--h:${(S.team.findIndex(x=>x.id===id)*67)%360}" title="${esc(m.name)}">${esc(initials(m.name))}</span>`;};
+function logAct(txt,ref){S.log=S.log||[];S.log.unshift({at:nowISO(),who:S.user||'me',txt,ref:ref||null});if(S.log.length>300)S.log.length=300;}
+const comments=key=>(S.comments||{})[key]||[];
+const ICON_C='<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>';
+const cbtn=(key,title)=>{const n=comments(key).length;return `<button class="cmt ${n?'has':''}" data-cmt="${esc(key)}" data-ttl="${esc(title)}" aria-label="Notes : ${esc(title)}">${ICON_C}<span>${n?n+' note'+(n>1?'s':''):'Note'}</span></button>`;};
+function bindCmts(){$$('#view [data-cmt]').forEach(b=>b.onclick=e=>{e.stopPropagation();openThread(b.dataset.cmt,b.dataset.ttl);});}
+let threadKey=null,threadTitle='';
+function openThread(key,title){threadKey=key;threadTitle=title;drawThread();$('#drawer').hidden=false;$('#scrim').hidden=false;setTimeout(()=>{const t=$('#cmtTxt');if(t)t.focus();},40);}
+function closeThread(){$('#drawer').hidden=true;$('#scrim').hidden=true;threadKey=null;render();}
+function drawThread(){
+  const list=comments(threadKey);
+  $('#drawer').innerHTML=`<div class="dr-h"><div style="min-width:0"><div class="eyebrow">Mes notes</div><h3>${esc(threadTitle)}</h3></div><button class="btn sm" id="drClose" aria-label="Fermer">✕</button></div>
+    <div class="dr-list">${list.length?list.map(c=>`<div class="cm"><div class="cm-b"><div class="cm-m"><span>${fmtTS(c.at)}</span></div><div class="cm-t">${esc(c.txt).replace(/\n/g,'<br>')}</div></div></div>`).join(''):'<div class="empty">Aucune note. Consignez un suivi, une relance, une consigne donnée ou un point à remonter au DFC.</div>'}</div>
+    <form class="dr-f" id="cmtForm"><div class="sub" style="margin:0 0 6px">Notes personnelles, visibles par vous seul.</div>
+      <textarea id="cmtTxt" rows="3" placeholder="Votre note…" required></textarea>
+      <div class="row-actions" style="justify-content:flex-end;margin-top:8px"><button class="btn primary" type="submit">Enregistrer</button></div></form>`;
+  $('#drClose').onclick=closeThread;
+  $('#cmtForm').onsubmit=e=>{e.preventDefault();const t=$('#cmtTxt').value.trim();if(!t)return;S.comments=S.comments||{};(S.comments[threadKey]=S.comments[threadKey]||[]).push({id:uid(),who:S.user||'me',at:nowISO(),txt:t});
+    logAct(`Note ajoutée : « ${threadTitle} »`,threadKey);save();drawThread();const l=$('#drawer .dr-list');l.scrollTop=l.scrollHeight;toast('Note enregistrée');};
+  const l=$('#drawer .dr-list');l.scrollTop=l.scrollHeight;
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#drawer').hidden)closeThread();});
+$('#scrim').onclick=closeThread;
+/* mentions : commentaires qui citent la personne connectée */
+function mentionsOf(id){const n=member(id).name.toLowerCase().split(' ')[0];const out=[];
+  Object.entries(S.comments||{}).forEach(([k,l])=>l.forEach(c=>{if(c.who!==id&&c.txt.toLowerCase().includes('@'+n))out.push({...c,key:k});}));return out.sort((a,b)=>b.at.localeCompare(a.at));}
+function feed(filterWho,limit=12){
+  const items=[...(S.log||[]).map(l=>({at:l.at,who:l.who,html:esc(l.txt),ref:l.ref,kind:'log'}))];
+  const nm=filterWho?member(filterWho).name:'';
+  return items.filter(i=>!filterWho||i.html.includes(nm)).sort((a,b)=>b.at.localeCompare(a.at)).slice(0,limit);
+}
+const feedHtml=list=>list.length?`<div class="feed">${list.map(i=>`<div class="fd"><span class="fd-dot" aria-hidden="true"></span><div>${i.html}<div class="fd-t">${ago(i.at)}</div></div></div>`).join('')}</div>`:'<div class="empty">Aucune action enregistrée.</div>';
+
+/* ---------- Statistiques par collaborateur ---------- */
+function memberStats(id){
+  const k=S.period;let assigned=0,done=0,onTime=0,lateNow=0;
+  [pshift(k,-2),pshift(k,-1),k].forEach(p=>{if(!S.closing[p])return;const st=S.closing[p];
+    ALL_ITEMS.forEach(i=>{if(ownerOf(p,i)!==id)return;const s=st[i.id]||{};const due=deadlineOf(p,i.j);
+      if(daysTo(due)>0&&!s.done)return; /* pas encore échu */
+      assigned++;if(s.done){done++;if(s.at&&s.at<=due)onTime++;}else lateNow++;});});
+  const open=S.tasks.filter(t=>t.owner===id&&t.status!=='terminée');
+  const tLate=open.filter(t=>t.due&&daysTo(t.due)<0);
+  const tDone30=S.tasks.filter(t=>t.owner===id&&t.status==='terminée'&&t.doneAt&&(today()-parseD(t.doneAt))/864e5<=30);
+  const cs=closingStats(k);const curOpen=cs.open.filter(i=>ownerOf(k,i)===id);
+  const rv=S.review.filter(r=>r.owner===id&&r.status!=='soldé');
+  return {assigned,done,onTime,rate:assigned?onTime/assigned:null,lateNow,open,tLate,tDone30,curOpen,rv,blocked:open.filter(t=>t.status==='bloquée')};
+}
+
+/* ===================== Vue : tâches ===================== */
+const TSTAT=['à faire','en cours','bloquée','terminée'];
+const tcls={'à faire':'neutral','en cours':'neutral','bloquée':'bad','terminée':'ok'};
+let tkFilter={who:'',st:'ouvertes'};
+function taskRowHtml(t){const late=t.status!=='terminée'&&t.due&&daysTo(t.due)<0;
+  return `<div class="item tk ${t.status==='terminée'?'done':''} ${late?'is-late':''}">
+    <input type="checkbox" id="tk-${t.id}" data-tk="${t.id}" ${t.status==='terminée'?'checked':''} aria-label="Terminée">
+    <div style="min-width:0"><label for="tk-${t.id}" class="t">${t.prio==='haute'?'<span class="chip bad" style="margin-right:6px">Priorité</span>':''}${esc(t.title)}</label>
+      ${t.desc?`<div class="tk-d">${esc(t.desc)}</div>`:''}
+      <div class="meta">${avatar(t.owner)}<span>${esc(member(t.owner).name)}</span>${t.due?`<span class="due ${late?'bad-txt':''}">échéance ${fmtDs(t.due)}</span>`:''}${late?'<span class="chip bad">en retard</span>':''}
+        ${t.status==='terminée'&&t.doneAt?`<span class="ok-txt">terminée le ${fmtDs(t.doneAt)}</span>`:''}</div></div>
+    <div class="right row-actions"><select data-tks="${t.id}" aria-label="Statut" class="st-${tcls[t.status]}">${TSTAT.map(s=>`<option ${t.status===s?'selected':''}>${s}</option>`).join('')}</select>
+      ${cbtn('tk:'+t.id,t.title)}
+      ${confirmDel===t.id?`<span class="confirm">Supprimer ? <button class="btn sm danger" data-tkdel="${t.id}">Oui</button><button class="btn sm" data-tkno="1">Non</button></span>`:`<button class="btn sm" data-tkask="${t.id}" aria-label="Supprimer la tâche">✕</button>`}</div></div>`;}
+function setTaskStatus(t,st){const old=t.status;t.status=st;t.done=st==='terminée';t.doneAt=st==='terminée'?isoD(today()):null;
+  if(old!==st)logAct(`Tâche « ${t.title} » (${member(t.owner).name}) : ${st}`,'tk:'+t.id);save();}
+function bindTaskRows(){
+  $$('#view [data-tk]').forEach(cb=>cb.onchange=()=>{const t=S.tasks.find(x=>x.id===cb.dataset.tk);setTaskStatus(t,cb.checked?'terminée':'à faire');render();toast(cb.checked?'Tâche terminée':'Tâche rouverte');});
+  $$('#view [data-tks]').forEach(s=>s.onchange=()=>{const t=S.tasks.find(x=>x.id===s.dataset.tks);setTaskStatus(t,s.value);render();});
+  $$('#view [data-tkask]').forEach(b=>b.onclick=()=>{confirmDel=b.dataset.tkask;render();});
+  $$('#view [data-tkno]').forEach(b=>b.onclick=()=>{confirmDel=null;render();});
+  $$('#view [data-tkdel]').forEach(b=>b.onclick=()=>{const t=S.tasks.find(x=>x.id===b.dataset.tkdel);S.tasks=S.tasks.filter(x=>x.id!==t.id);confirmDel=null;logAct(`Tâche supprimée : « ${t.title} »`);save();render();toast('Tâche supprimée');});
+  bindCmts();
+}
+function taskForm(owner){return `<form class="tk-form" id="tkForm">
+    <input type="text" id="tkTitle" placeholder="Nouvelle tâche (ex. Justifier le compte 4711)" required>
+    <select id="tkOwner" aria-label="Responsable">${S.team.map(m=>`<option value="${m.id}" ${m.id===owner?'selected':''}>${esc(m.name)}</option>`).join('')}</select>
+    <input type="date" id="tkDue" aria-label="Échéance">
+    <select id="tkPrio" aria-label="Priorité"><option value="normale">Priorité normale</option><option value="haute">Priorité haute</option></select>
+    <input type="text" id="tkDesc" placeholder="Détail ou consigne (facultatif)" class="tk-wide">
+    <button class="btn primary" type="submit">Ajouter</button></form>`;}
+function bindTaskForm(){$('#tkForm').onsubmit=e=>{e.preventDefault();const t=$('#tkTitle').value.trim();if(!t)return;
+  const task={id:'t'+uid(),title:t,desc:$('#tkDesc').value.trim(),owner:$('#tkOwner').value,due:$('#tkDue').value||'',prio:$('#tkPrio').value,status:'à faire',done:false,createdBy:S.user||'me',createdAt:nowISO()};
+  S.tasks.push(task);logAct(`Tâche confiée à ${member(task.owner).name} : « ${t} »`,'tk:'+task.id);save();render();toast('Tâche ajoutée');};}
+function vTaches(){
+  const ts=taskStats();
+  let list=S.tasks.slice();
+  if(tkFilter.who)list=list.filter(t=>t.owner===tkFilter.who);
+  if(tkFilter.st==='ouvertes')list=list.filter(t=>t.status!=='terminée');else if(tkFilter.st==='retard')list=list.filter(t=>t.status!=='terminée'&&t.due&&daysTo(t.due)<0);else if(tkFilter.st)list=list.filter(t=>t.status===tkFilter.st);
+  list.sort((a,b)=>(a.status==='terminée')-(b.status==='terminée')||(b.prio==='haute')-(a.prio==='haute')||String(a.due||'9').localeCompare(String(b.due||'9')));
+  const by=s=>S.tasks.filter(t=>t.status===s).length;
+  $('#view').innerHTML=`
+    <div class="grid g4">${stat('À faire',by('à faire'),'tâches en attente','','taches')}${stat('En cours',by('en cours'),'en traitement','','taches')}${stat('Bloquées',by('bloquée'),'besoin d’un arbitrage',by('bloquée')?'bad':'ok','taches')}${stat('En retard',ts.late.length,'échéance dépassée',ts.late.length?'bad':'ok','taches')}</div>
+    <section class="panel" style="margin-top:14px">
+      <h3>Nouvelle tâche</h3><p class="sub">Pour vous ou à confier à un collaborateur.</p>${taskForm('')}
+    </section>
+    <section class="panel" style="margin-top:14px">
+      <div class="row-actions" style="justify-content:space-between"><h3 style="margin:0">Tâches de l’équipe</h3>
+        <div class="row-actions"><select id="fWho" aria-label="Personne"><option value="">Toute l’équipe</option>${S.team.map(m=>`<option value="${m.id}" ${tkFilter.who===m.id?'selected':''}>${esc(m.name)}</option>`).join('')}</select>
+        <select id="fSt" aria-label="Statut">${[['ouvertes','Non terminées'],['retard','En retard'],['à faire','À faire'],['en cours','En cours'],['bloquée','Bloquées'],['terminée','Terminées'],['','Toutes']].map(([v,l])=>`<option value="${v}" ${tkFilter.st===v?'selected':''}>${l}</option>`).join('')}</select></div></div>
+      <div class="list" style="margin-top:8px">${list.map(taskRowHtml).join('')||'<div class="empty">Aucune tâche pour ce filtre.</div>'}</div>
+    </section>`;
+  $('#fWho').onchange=e=>{tkFilter.who=e.target.value;render();};$('#fSt').onchange=e=>{tkFilter.st=e.target.value;render();};
+  bindTaskForm();bindTaskRows();bindGo();
+}
+
+/* ===================== Vue : collaborateurs ===================== */
+let teamSel='';
+function vEquipe(){
+  if(teamSel&&S.team.some(m=>m.id===teamSel))return vMembre(teamSel);
+  const rows=S.team.map(m=>({m,s:memberStats(m.id)}));
+  $('#view').innerHTML=`
+    <p class="sub" style="margin:0 0 12px">Votre suivi personnel de l’équipe : réalisations, retards, objectifs et points individuels. Les collaborateurs n’ont pas accès à cet outil.</p>
+    <div class="grid g3 team-cards">${rows.map(({m,s})=>`<button class="tcard" data-mem="${m.id}">
+      <div class="tc-h">${avatar(m.id)}<div style="min-width:0;text-align:left"><b>${esc(m.name)}</b><div class="sub" style="margin:0">${esc(m.role)}</div></div></div>
+      <div class="tc-k"><div><span class="num">${s.rate==null?'—':Math.round(s.rate*100)+' %'}</span><small>à temps (3 mois)</small></div>
+        <div><span class="num">${s.curOpen.length+s.open.length}</span><small>ouverts</small></div>
+        <div><span class="num ${s.lateNow+s.tLate.length?'bad-txt':''}">${s.lateNow+s.tLate.length}</span><small>retards</small></div></div>
+      <div class="bar"><i style="width:${s.rate==null?0:Math.round(s.rate*100)}%;${s.rate!=null&&s.rate<.8?'background:var(--warn)':''}"></i></div>
+      ${s.blocked.length?`<span class="chip bad">${s.blocked.length} tâche(s) bloquée(s)</span>`:''}
+    </button>`).join('')}</div>
+    <div class="grid g2" style="margin-top:14px">
+      <section class="panel"><h3>Respect des échéances de clôture</h3><p class="sub">Points de clôture réalisés à la date prévue, sur les trois derniers mois.</p>
+        ${hbars(rows.filter(r=>r.s.rate!=null).map(r=>({l:r.m.name,v:r.s.rate,tip:`${r.m.name} · ${r.s.onTime}/${r.s.assigned} points à temps`})).sort((a,b)=>b.v-a.v))}</section>
+      <section class="panel"><h3>Historique</h3>${feedHtml(feed('',10))}</section>
+    </div>`;
+  $$('#view [data-mem]').forEach(b=>b.onclick=()=>{teamSel=b.dataset.mem;render();window.scrollTo(0,0);});
+}
+function vMembre(id){
+  const m=member(id),s=memberStats(id),k=S.period;
+  m.objectives=m.objectives||[];m.notes=m.notes||[];
+  const myCom=[];Object.entries(S.comments||{}).forEach(([key,l])=>l.forEach(c=>{if(c.who===id)myCom.push({...c,key});}));myCom.sort((a,b)=>b.at.localeCompare(a.at));
+  const tasks=S.tasks.filter(t=>t.owner===id).sort((a,b)=>(a.status==='terminée')-(b.status==='terminée')||String(a.due||'9').localeCompare(String(b.due||'9')));
+  $('#view').innerHTML=`
+    <div class="row-actions" style="margin-bottom:12px"><button class="btn sm" id="back">‹ Toute l’équipe</button></div>
+    <section class="panel mem-h">${avatar(id)}<div style="flex:1;min-width:0"><h3 style="font-size:20px">${esc(m.name)}</h3><div class="sub">${esc(m.role)}</div></div>
+      <div class="tc-k"><div><span class="num">${s.rate==null?'—':Math.round(s.rate*100)+' %'}</span><small>à temps (3 mois)</small></div><div><span class="num">${s.done}/${s.assigned}</span><small>points réalisés</small></div>
+        <div><span class="num">${s.tDone30.length}</span><small>tâches finies (30 j)</small></div><div><span class="num ${s.lateNow+s.tLate.length?'bad-txt':''}">${s.lateNow+s.tLate.length}</span><small>retards</small></div></div></section>
+    <div class="grid g2" style="margin-top:14px">
+      <section class="panel"><h3>Clôture de ${plabel(k).toLowerCase()} <span class="chip ${s.curOpen.length?'warn':'ok'}">${s.curOpen.length} ouvert(s)</span></h3>
+        <div class="list" style="margin-top:6px">${closingStats(k).items.filter(i=>ownerOf(k,i)===id).map(i=>{const late=!i.s.done&&daysTo(i.due)<0;return `<div class="item ${i.s.done?'done':''}" style="grid-template-columns:auto minmax(0,1fr) auto">
+          <span class="chip ${i.s.done?'ok':late?'bad':'neutral'}">${i.s.done?'✓':late?'retard':'J+'+i.j}</span><div style="min-width:0"><div class="t">${esc(i.t)}</div><div class="meta"><span class="acct">${esc(i.acct)}</span><span>${fmtDs(i.due)}</span></div></div>${cbtn('cl:'+k+':'+i.id,i.t)}</div>`;}).join('')||'<div class="empty">Aucun point de clôture assigné.</div>'}</div></section>
+      <section class="panel"><h3>Objectifs</h3><p class="sub">Fixés lors des points individuels.</p>
+        <div style="margin-top:6px">${m.objectives.map((o,i)=>`<div class="pitem ${o.d?'done':''}"><input type="checkbox" id="ob-${i}" data-ob="${i}" ${o.d?'checked':''}><label for="ob-${i}">${esc(o.t)}${o.due?` <span class="sub">· ${fmtD(o.due)}</span>`:''}</label></div>`).join('')||'<div class="empty">Aucun objectif.</div>'}</div>
+        <div class="addline"><input type="text" id="obT" placeholder="Nouvel objectif (ex. lettrage fournisseurs à jour chaque 7 du mois)"><input type="date" id="obD" aria-label="Échéance"><button class="btn sm" id="obAdd">Ajouter</button></div></section>
+    </div>
+    <section class="panel" style="margin-top:14px"><h3>Tâches <span class="chip ${s.tLate.length?'bad':'neutral'}">${s.open.length} ouverte(s)</span></h3>
+      ${taskForm(id)}<div class="list" style="margin-top:8px">${tasks.map(taskRowHtml).join('')||'<div class="empty">Aucune tâche.</div>'}</div></section>
+    <div class="grid g2" style="margin-top:14px">
+      <section class="panel"><h3>Points individuels</h3><p class="sub">Notes d’entretien, difficultés remontées, besoins de formation.</p>
+        <form class="addline" id="noteForm" style="margin-top:10px"><input type="text" id="noteT" placeholder="Note du point de la semaine" required><button class="btn sm primary" type="submit">Enregistrer</button></form>
+        <div class="feed" style="margin-top:10px">${m.notes.slice().sort((a,b)=>b.at.localeCompare(a.at)).map(n=>`<div class="fd"><span class="fd-dot" aria-hidden="true"></span><div>${esc(n.t)}<div class="fd-t">${fmtTS(n.at)}</div></div></div>`).join('')||'<div class="empty">Aucune note.</div>'}</div></section>
+      <section class="panel"><h3>Historique</h3>${feedHtml(feed(id,8))}</section>
+    </div>`;
+  $('#back').onclick=()=>{teamSel='';render();};
+  $$('#view [data-ob]').forEach(cb=>cb.onchange=()=>{const o=m.objectives[+cb.dataset.ob];o.d=cb.checked;logAct(`Objectif de ${m.name} ${cb.checked?'atteint':'rouvert'} : « ${o.t} »`);save();render();});
+  $('#obAdd').onclick=()=>{const t=$('#obT').value.trim();if(!t){$('#obT').focus();return;}m.objectives.push({t,due:$('#obD').value||'',d:false});logAct(`Objectif fixé à ${m.name} : « ${t} »`);save();render();};
+  $('#noteForm').onsubmit=e=>{e.preventDefault();const t=$('#noteT').value.trim();if(!t)return;m.notes.push({t,at:nowISO(),by:S.user||'me'});save();render();toast('Note enregistrée');};
+  bindTaskForm();bindTaskRows();
+}
+
+
+/* ===================== Synthèse une page pour la Direction générale ===================== */
+function synthFacts(k){
+  const x=kpis(k),p=kpis(pshift(k,-1)),n1=kpis(pshift(k,-12));const caY=cumul(k,'ca'),buY=cumul(k,'budget'),n1Y=cumul(pshift(k,-12),'ca');
+  const fr=fiscalRows(k),br=bankRows(k),cs=closingStats(k);
+  return {x,p,n1,caY,buY,n1Y,ebeY:cumulK(k,'ebe'),rcaiY:cumulK(k,'rcai'),
+    fiscalOk:fr.every(r=>r.s.done),fiscalN:fr.filter(r=>r.s.done).length,fiscalT:fr.length,tf:fr.reduce((a,r)=>a+(+r.s.amount||0),0),
+    bankOk:br.filter(b=>b.x.done).length,bankT:br.length,closePct:cs.pct};
+}
+function vSynthese(){
+  const k=S.period,F=synthFacts(k),x=F.x,ks=last12(k),K=ks.map(kpis),per=plabel(k).toLowerCase();
+  if(!x){$('#view').innerHTML=`${repSwitch()}<section class="panel" style="margin-top:12px"><h3>Données manquantes</h3></section>`;bindRepSwitch();return;}
+  const big=(l,v,sub,ch)=>`<div class="dg-k"><span class="l">${l}</span><span class="v num">${v}</span><span class="s">${ch||''} ${sub||''}</span></div>`;
+  $('#view').innerHTML=`
+  <div class="row-actions" style="justify-content:space-between;margin-bottom:12px">${repSwitch()}<div class="row-actions">
+    <button class="btn" id="cpy2">Copier le texte</button>${window.self===window.top?'<button class="btn primary" id="prt2">Imprimer / PDF</button>':''}</div></div>
+  <article class="report-doc dg" id="dgDoc">
+    <header class="rp-head">
+      <div><div class="eyebrow">Synthèse mensuelle</div><h1>${plabel(k)}</h1>
+      <div class="sub">${S.company?esc(S.company)+' · ':''}Pour la Direction générale · transmise par la Direction financière · établie le ${fmtD(isoD(today()))}</div></div>
+      <span class="demo">Chiffres d’exemple</span>
+    </header>
+    <div class="dg-grid">
+      ${big('Chiffre d’affaires du mois',M(x.ca)+' M',`vs budget · cumul ${M(F.caY)} M`,vchip(x.ecartBudget))}
+      ${big('Excédent brut d’exploitation',M(x.ebe)+' M',`${P(x.tEbe)} du CA · cumul ${M(F.ebeY)} M`,'')}
+      ${big('Résultat avant impôt (cumul)',M(F.rcaiY)+' M',`à fin ${MOIS[pparse(k).m-1]}`,'')}
+      ${big('Trésorerie nette',M(x.treso)+' M','vs mois précédent',vchip(varPct(x.treso,F.p&&F.p.treso)))}
+    </div>
+    <div class="rp-grid" style="margin-top:22px">
+      <div><h3 class="rp-h3">Chiffre d’affaires et budget, 12 mois (M FCFA)</h3>${legend([{n:'Réalisé',c:'var(--s1)'},{n:'Budget',c:'var(--ink)',line:1}])}${colChart(ks,K.map(z=>z?z.ca:0),K.map(z=>z?z.budget:0),{aria:'CA et budget'})}</div>
+      <div><h3 class="rp-h3">En résumé</h3><ul class="dg-l">
+        <li>Chiffre d’affaires de ${M(x.ca)} M FCFA, ${P(x.ecartBudget)} par rapport au budget${F.n1?` et ${P(varPct(x.ca,F.n1.ca))} par rapport à ${plabel(pshift(k,-12)).toLowerCase()}`:''}.</li>
+        <li>Cumul de l’exercice : ${M(F.caY)} M FCFA, soit ${P(F.caY/F.buY)} du budget de la période${F.n1Y?` (${P(varPct(F.caY,F.n1Y))} sur un an)`:''}.</li>
+        <li>EBE de ${P(x.tEbe)} du chiffre d’affaires ; résultat avant impôt cumulé de ${M(F.rcaiY)} M FCFA.</li>
+        <li>Trésorerie nette de ${M(x.treso)} M FCFA ; délai moyen de paiement des clients : ${J(x.dso)}.</li>
+      </ul>
+      <h3 class="rp-h3" style="margin-top:16px">Conformité</h3>
+      <div class="dg-c">
+        <span class="chip ${F.fiscalOk?'ok':'warn'}">${F.fiscalOk?'✓':'!'} Déclarations fiscales et sociales ${F.fiscalN}/${F.fiscalT}</span>
+        <span class="chip ${F.bankOk===F.bankT?'ok':'warn'}">${F.bankOk===F.bankT?'✓':'!'} Comptes bancaires rapprochés ${F.bankOk}/${F.bankT}</span>
+        <span class="chip ${F.closePct===100?'ok':'neutral'}">Clôture comptable ${F.closePct} %</span>
+      </div></div>
+    </div>
+    <footer class="rp-foot">Chiffres issus de la comptabilité clôturée, en millions de FCFA hors taxes. Le détail figure dans le reporting adressé au Directeur financier.</footer>
+  </article>`;
+  bindTips();bindRepSwitch();
+  $('#cpy2').onclick=async()=>{const t=synthText();try{await navigator.clipboard.writeText(t);toast('Synthèse copiée');}catch(e){toast('Copie impossible ici : sélectionnez le texte');}};
+  const pr=$('#prt2');if(pr)pr.onclick=()=>window.print();
+}
+function synthText(){
+  const k=S.period,F=synthFacts(k),x=F.x;if(!x)return '';
+  return [`Synthèse mensuelle — ${plabel(k).toLowerCase()}${S.company?' · '+S.company:''}`,'Pour la Direction générale, transmise par la Direction financière','',
+    `- Chiffre d’affaires : ${M(x.ca)} M FCFA (${P(x.ecartBudget)} vs budget) ; cumul ${M(F.caY)} M FCFA (${P(F.caY/F.buY)} du budget).`,
+    `- EBE : ${M(x.ebe)} M FCFA, ${P(x.tEbe)} du CA ; résultat avant impôt cumulé : ${M(F.rcaiY)} M FCFA.`,
+    `- Trésorerie nette : ${M(x.treso)} M FCFA ; délai clients : ${J(x.dso)}.`,
+    `- Déclarations fiscales et sociales : ${F.fiscalN}/${F.fiscalT} ; comptes bancaires rapprochés : ${F.bankOk}/${F.bankT} ; clôture : ${F.closePct} %.`].join('\n');
+}
+
+/* ===================== Navigation ===================== */
+const TABS=[['accueil','Tableau de bord'],['indicateurs','Indicateurs comptables'],['cloture','Clôture mensuelle'],['fiscal','Fiscal et social'],['banques','Rapprochements'],
+  ['comptes','Comptes à justifier'],['taches','Tâches'],['equipe','Suivi de l’équipe'],['audit','Audit / CAC'],['rapport','Rapports'],['plan','Plan 90 jours'],['reglages','Réglages']];
+let tab=(location.hash||'').slice(1);if(!TABS.some(t=>t[0]===tab))tab='accueil';
+function go(t){tab=t;try{history.replaceState(null,'','#'+t);}catch(e){}render();window.scrollTo(0,0);}
+window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(TABS.some(t=>t[0]===h)&&h!==tab){tab=h;render();}});
+
+function header(){
+  $('#hCompany').textContent=S.company?S.company:'Pilotage Chef Comptable';
+  $('#hWho').textContent=(S.me?S.me+' · ':'')+'Chef comptable'+(S.company?' · Pilotage de la fonction comptable':'');
+  $('#pLbl').textContent='Clôture '+plabel(S.period).toLowerCase().replace(/^./,c=>c.toUpperCase());
+  const cs=closingStats(S.period),ts=taskStats();
+  const badge={cloture:cs.late.length,taches:ts.late.length};
+  $('#tabs').innerHTML=TABS.map(([k,l])=>`<a href="#${k}" class="${k===tab?'on':''}" data-tab="${k}">${l}${badge[k]?`<span class="cnt">${badge[k]}</span>`:''}</a>`).join('');
+  $$('#tabs a').forEach(a=>a.onclick=e=>{e.preventDefault();if(a.dataset.tab==='equipe')teamSel='';go(a.dataset.tab);});
+}
+$('#pPrev').onclick=()=>{S.period=pshift(S.period,-1);save();render();};
+$('#pNext').onclick=()=>{S.period=pshift(S.period,1);save();render();};
+
+function applyBrand(){const r=document.documentElement.style;if(S.brand){r.setProperty('--ledger',S.brand);r.setProperty('--band',S.brand);}else{r.removeProperty('--ledger');r.removeProperty('--band');}
+  const m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute('content',S.brand||'#13804b');}
+function render(){applyBrand();header();$('#tip').hidden=true;({accueil:vAccueil,indicateurs:vIndicateurs,cloture:vCloture,fiscal:vFiscal,banques:vBanques,comptes:vComptes,taches:vTaches,equipe:vEquipe,audit:vAudit,rapport:vRapport,plan:vPlan,reglages:vReglages})[tab]();}
+const stat=(l,v,s,cls,link)=>`<a class="stat ${cls||''}" href="#${link}" data-go="${link}"><span class="l">${l}</span><span class="v num">${v}</span><span class="s">${s||''}</span></a>`;
+function bindGo(){$$('#view [data-go]').forEach(a=>a.onclick=e=>{e.preventDefault();go(a.dataset.go);});}
+
+/* ===================== Vues ===================== */
+function vAccueil(){
+  const k=S.period,cs=closingStats(k),fr=fiscalRows(k),fo=fr.filter(r=>!r.s.done),br=bankRows(k),rs=reviewStats(),ts=taskStats();
+  const gaps=br.filter(b=>b.gap!=null&&b.gap!==0&&!b.x.done);const notR=br.filter(b=>!b.x.done);
+  const nextDue=fo.length?fo[0].due:null;
+  const dlt=daysTo(cs.target);
+  const checks=[
+    {l:'Clôture terminée',ok:cs.done===cs.total,d:`${cs.done}/${cs.total} points`,go:'cloture'},
+    {l:'Déclarations de la période déposées',ok:!fo.length,d:fo.length?`${fo.length} restante(s), échéance ${fmtDs(nextDue)}`:'toutes déposées',go:'fiscal'},
+    {l:'Comptes bancaires rapprochés sans écart',ok:!notR.length,d:notR.length?`${notR.length} compte(s) ouvert(s)`:'tous rapprochés',go:'banques'},
+    {l:'Comptes d’attente soldés',ok:!S.review.some(r=>r.acct.startsWith('471')&&r.status!=='soldé'),d:'compte 471',go:'comptes'},
+    {l:'Aucune tâche d’équipe en retard',ok:!ts.late.length,d:ts.late.length?`${ts.late.length} en retard`:'à jour',go:'taches'}];
+  const ready=checks.filter(c=>c.ok).length;
+  /* charge de l’équipe */
+  const load=S.team.map(m=>({m,n:cs.open.filter(i=>ownerOf(k,i)===m.id).length+ts.open.filter(t=>t.owner===m.id).length,late:cs.late.filter(i=>ownerOf(k,i)===m.id).length+ts.late.filter(t=>t.owner===m.id).length}));
+  const maxL=Math.max(1,...load.map(x=>x.n));
+  $('#view').innerHTML=`
+    <div class="grid g4">
+      ${stat('Clôture '+plabel(k).split(' ')[0],cs.pct+' %',`${cs.done}/${cs.total} points · objectif J+${S.target} (${fmtDs(cs.target)})`,cs.late.length?'bad':cs.pct===100?'ok':'','cloture')}
+      ${stat('Points de clôture en retard',cs.late.length,cs.late.length?'à traiter en priorité':'aucun retard',cs.late.length?'bad':'ok','cloture')}
+      ${stat('Écarts bancaires non justifiés',gaps.length?mshort(gaps.reduce((a,b)=>a+Math.abs(b.gap),0)):'0',gaps.length?gaps.length+' compte(s)':'tous les comptes concordent',gaps.length?'warn':'ok','banques')}
+      ${stat('Comptes à justifier',mshort(rs.total),`${rs.open.length} compte(s) · ${rs.old.length} de plus de 90 jours`,rs.old.length?'warn':'','comptes')}
+    </div>
+    <div class="grid g2" style="margin-top:14px">
+      <section class="panel">
+        <h3>Prêt pour le reporting au DFC ? <span class="chip ${ready===checks.length?'ok':'warn'}">${ready}/${checks.length}</span></h3>
+        <p class="sub">${dlt>=0?`Clôture attendue le ${fmtD(cs.target)}, dans ${dlt} jour(s).`:`Clôture attendue le ${fmtD(cs.target)} : objectif dépassé de ${-dlt} jour(s).`}</p>
+        <div class="list" style="margin-top:8px">${checks.map(c=>`<div class="item" style="grid-template-columns:auto minmax(0,1fr) auto">
+          <span class="chip ${c.ok?'ok':'bad'}" aria-label="${c.ok?'Fait':'À faire'}">${c.ok?'✓':'!'}</span>
+          <div><div class="t">${c.l}</div><div class="meta">${esc(c.d)}</div></div>
+          <a href="#${c.go}" data-go="${c.go}" class="btn sm">Voir</a></div>`).join('')}</div>
+      </section>
+      <section class="panel">
+        <h3>Priorités</h3>
+        <p class="sub">Points en retard et prochaines échéances, tous modules confondus.</p>
+        <div class="list" style="margin-top:8px">
+          ${[...cs.late.map(i=>({t:i.t,m:`Clôture · ${member(i.own).name} · prévu le ${fmtDs(i.due)}`,lvl:'bad',go:'cloture'})),
+             ...ts.late.map(t=>({t:t.title,m:`Équipe · ${member(t.owner).name} · prévu le ${fmtDs(t.due)}`,lvl:'bad',go:'taches'})),
+             ...gaps.map(b=>({t:`Écart de ${money(b.gap)} sur ${b.name}`,m:'Rapprochement bancaire',lvl:'warn',go:'banques'})),
+             ...fo.slice(0,5).map(r=>({t:`${r.lbl} de ${plabel(k).toLowerCase()}`,m:`Échéance le ${fmtD(r.due)}`,lvl:daysTo(r.due)<0?'bad':daysTo(r.due)<=5?'warn':'neutral',go:'fiscal'}))]
+            .slice(0,8).map(p=>`<div class="item" style="grid-template-columns:auto minmax(0,1fr) auto"><span class="chip ${p.lvl}">${p.lvl==='bad'?'Retard':p.lvl==='warn'?'Attention':'À venir'}</span>
+              <div><div class="t">${esc(p.t)}</div><div class="meta">${esc(p.m)}</div></div><a href="#${p.go}" data-go="${p.go}" class="btn sm">Ouvrir</a></div>`).join('')||'<div class="empty">Rien d’urgent.</div>'}
+        </div>
+      </section>
+    </div>
+    <div class="sec-title">Indicateurs financiers — ${plabel(k).toLowerCase()} <a href="#indicateurs" data-go="indicateurs" style="color:var(--ledger);text-transform:none;letter-spacing:0;font-weight:500;margin-left:8px">détail →</a></div>
+    ${finTiles(k)}
+    <div class="sec-title">Avancement par cycle</div>
+    <section class="panel">
+      <div class="grid g2" style="gap:10px 28px">${CLOSING.map(c=>{const it=cs.items.filter(i=>i.cycle===c.cycle);const d=it.filter(i=>i.s.done).length;const late=it.some(i=>!i.s.done&&daysTo(i.due)<0);
+        return `<div><div style="display:flex;justify-content:space-between;gap:8px;font-size:13.5px;margin-bottom:5px"><span>${c.cycle}</span><span class="num ${late?'bad-txt':d===it.length?'ok-txt':''}">${d}/${it.length}</span></div><div class="bar"><i style="width:${Math.round(d/it.length*100)}%;${late?'background:var(--bad)':''}"></i></div></div>`;}).join('')}</div>
+    </section>
+    <div class="grid g2" style="margin-top:26px">
+      <section class="panel"><h3>Historique</h3><p class="sub">Vos dernières actions dans l’outil.</p>${feedHtml(feed('',7))}</section>
+      <section class="panel"><h3>Dernières notes</h3>${(()=>{const all=[];Object.entries(S.comments||{}).forEach(([key,l])=>l.forEach(c=>all.push({...c,key})));all.sort((a,b)=>b.at.localeCompare(a.at));
+        return all.length?`<div class="feed">${all.slice(0,5).map(c=>`<div class="fd"><span class="fd-dot" aria-hidden="true"></span><div>${esc(c.txt.length>140?c.txt.slice(0,140)+'…':c.txt)}<div class="fd-t">${ago(c.at)}</div></div></div>`).join('')}</div>`:'<div class="empty">Aucune note.</div>';})()}</section>
+    </div>
+    <div class="sec-title">Charge de l’équipe</div>
+    <section class="panel">
+      <table class="ledger"><tbody>${load.map(x=>`<tr><td style="width:38%"><b>${esc(x.m.name)}</b><div class="sub" style="margin:0">${esc(x.m.role)}</div></td>
+        <td><div class="bar"><i style="width:${Math.round(x.n/maxL*100)}%"></i></div></td>
+        <td class="r" style="width:110px;white-space:nowrap"><span class="num">${x.n}</span> ouvert(s)</td><td class="r" style="width:96px">${x.late?`<span class="chip bad">${x.late} retard</span>`:'<span class="chip ok">à jour</span>'}</td></tr>`).join('')}</tbody></table>
+    </section>`;
+  bindGo();bindTips();
+}
+
+function vCloture(){
+  const k=S.period,cs=closingStats(k),st=closingOf(k);
+  $('#view').innerHTML=`
+    <section class="panel">
+      <h3>Checklist de clôture — ${plabel(k).toLowerCase()} <span class="chip ${cs.late.length?'bad':cs.pct===100?'ok':'neutral'}">${cs.done}/${cs.total} · ${cs.pct} %</span></h3>
+      <p class="sub">Objectif : clôture à J+${S.target}, soit le ${fmtD(cs.target)}. Chaque point a un responsable et une échéance en jours après la fin du mois. Cochez au fil de l’eau.</p>
+      <div class="bar" style="margin-top:12px"><i style="width:${cs.pct}%"></i></div>
+      <div class="row-actions" style="margin-top:12px"><button class="btn sm" id="clAllCycle" ${cs.open.length?'':'disabled'}>Cocher tous les points sans retard</button></div>
+      ${CLOSING.map(c=>{const it=cs.items.filter(i=>i.cycle===c.cycle);const d=it.filter(i=>i.s.done).length;
+        return `<div class="cycle"><div class="cycle-h"><h3>${c.cycle}</h3><div class="bar"><i style="width:${Math.round(d/it.length*100)}%"></i></div><span class="num">${d}/${it.length}</span></div>
+        <div class="list">${it.map(i=>{const late=!i.s.done&&daysTo(i.due)<0;const s=st[i.id]||{};
+          return `<div class="item ${i.s.done?'done':''}">
+            <input type="checkbox" id="cl-${i.id}" data-cl="${i.id}" ${i.s.done?'checked':''} aria-label="${esc(i.t)}">
+            <div style="min-width:0"><label for="cl-${i.id}" class="t">${esc(i.t)}</label>
+              <div class="meta"><span class="acct">${esc(i.acct)}</span><span class="due ${late?'bad-txt':''}">J+${i.j} · ${fmtDs(i.due)}</span>
+              ${i.s.done&&s.at?`<span class="ok-txt">fait le ${fmtDs(s.at)}</span>`:''}${late?'<span class="chip bad">en retard</span>':''}
+              ${s.note?`<span>· ${esc(s.note)}</span>`:''}</div></div>
+            <div class="right"><select data-own="${i.id}" aria-label="Responsable">${S.team.map(m=>`<option value="${m.id}" ${(s.own||i.own)===m.id?'selected':''}>${esc(m.name)}</option>`).join('')}</select>${cbtn('cl:'+k+':'+i.id,i.t)}</div>
+          </div>`;}).join('')}</div></div>`;}).join('')}
+    </section>`;
+  bindCmts();
+  $$('#view [data-cl]').forEach(cb=>cb.onchange=()=>{const s=st[cb.dataset.cl]=st[cb.dataset.cl]||{};s.done=cb.checked;s.at=cb.checked?isoD(today()):null;
+    const it=ALL_ITEMS.find(x=>x.id===cb.dataset.cl);logAct(`« ${it.t} » ${cb.checked?'validé':'rouvert'} (${member(ownerOf(k,it)).name})`,'cl:'+k+':'+it.id);save();render();toast(cb.checked?'Point de clôture validé':'Point rouvert');});
+  $$('#view [data-own]').forEach(sel=>sel.onchange=()=>{const s=st[sel.dataset.own]=st[sel.dataset.own]||{};s.own=sel.value;const it=ALL_ITEMS.find(x=>x.id===sel.dataset.own);logAct(`« ${it.t} » confié à ${member(sel.value).name}`);save();toast('Responsable : '+member(sel.value).name);});
+  $('#clAllCycle').onclick=()=>{cs.open.filter(i=>daysTo(i.due)>=0).forEach(i=>{st[i.id]={...(st[i.id]||{}),done:true,at:isoD(today())};});logAct('Points de clôture sans retard validés');save();render();toast('Points cochés');};
+}
+/* surcharge du responsable pour les calculs */
+const ownerOf=(k,i)=>((closingOf(k)[i.id]||{}).own)||i.own;
+
+function vFiscal(){
+  const k=S.period,f=fiscalOf(k),rows=fiscalRows(k),nk=pshift(k,1);
+  const total=rows.reduce((a,r)=>a+(+r.s.amount||0),0);
+  $('#view').innerHTML=`
+    <section class="panel">
+      <h3>Déclarations de ${plabel(k).toLowerCase()} <span class="chip ${rows.every(r=>r.s.done)?'ok':'warn'}">${rows.filter(r=>r.s.done).length}/${rows.length} déposées</span></h3>
+      <p class="sub">Échéances du mois suivant (${plabel(nk).toLowerCase()}). Le montant sert au suivi de trésorerie et au rapport au DFC.</p>
+      <div class="scroll" style="margin-top:10px"><table class="ledger"><thead><tr><th></th><th>Déclaration</th><th>Nature</th><th>Échéance</th><th class="r">Montant (FCFA)</th><th>Statut</th></tr></thead><tbody>
+      ${rows.map(r=>{const late=!r.s.done&&daysTo(r.due)<0;return `<tr class="${r.s.done?'done':late?'late':''}">
+        <td><input type="checkbox" data-fi="${r.code}" ${r.s.done?'checked':''} aria-label="Déposée : ${esc(r.lbl)}"></td>
+        <td class="t"><b>${esc(r.lbl)}</b></td><td>${r.kind}</td><td class="num">${fmtD(r.due)}</td>
+        <td class="r"><input type="number" min="0" step="1000" data-fa="${r.code}" value="${r.s.amount??''}" style="width:140px;text-align:right" class="num" aria-label="Montant ${esc(r.lbl)}"></td>
+        <td>${r.s.done?`<span class="chip ok">Déposée le ${fmtDs(r.s.at)}</span>`:late?'<span class="chip bad">En retard</span>':daysTo(r.due)<=5?`<span class="chip warn">J-${daysTo(r.due)}</span>`:'<span class="chip neutral">À déposer</span>'}</td></tr>`;}).join('')}
+      <tr><td></td><td colspan="3"><b>Total à payer</b></td><td class="r num"><b>${money(total)}</b></td><td></td></tr>
+      </tbody></table></div>
+      <div class="row-actions" style="margin-top:12px"><button class="btn sm primary" id="fiAll" ${rows.every(r=>r.s.done)?'disabled':''}>Tout marquer déposé aujourd’hui</button></div>
+    </section>
+    <div class="sec-title">Échéances annuelles</div>
+    <section class="panel">
+      <table class="ledger"><tbody>${S.annual.map(a=>`<tr class="${a.done?'done':daysTo(a.date)<0?'late':''}"><td style="width:30px"><input type="checkbox" data-an="${a.id}" ${a.done?'checked':''} aria-label="${esc(a.lbl)}"></td>
+        <td class="t">${esc(a.lbl)}</td><td class="num">${fmtD(a.date)}</td><td class="r">${a.done?'<span class="chip ok">Fait</span>':`<span class="chip ${daysTo(a.date)<30?'warn':'neutral'}">dans ${daysTo(a.date)} j</span>`}</td></tr>`).join('')}</tbody></table>
+      <p class="note">Les obligations et leurs jours d’échéance se paramètrent dans Réglages, selon le régime de l’entreprise.</p>
+    </section>`;
+  $$('#view [data-fi]').forEach(cb=>cb.onchange=()=>{const s=f[cb.dataset.fi]=f[cb.dataset.fi]||{};s.done=cb.checked;s.at=cb.checked?isoD(today()):null;logAct(`Déclaration ${cb.dataset.fi} de ${plabel(k).toLowerCase()} : ${cb.checked?'déposée':'dépôt annulé'}`);save();render();toast(cb.checked?'Déclaration déposée':'Dépôt annulé');});
+  $$('#view [data-fa]').forEach(inp=>inp.onchange=()=>{const s=f[inp.dataset.fa]=f[inp.dataset.fa]||{};s.amount=inp.value===''?null:+inp.value;save();render();});
+  $('#fiAll').onclick=()=>{rows.forEach(r=>{if(!r.s.done)f[r.code]={...(f[r.code]||{}),done:true,at:isoD(today())};});save();render();toast('Déclarations marquées déposées');};
+  $$('#view [data-an]').forEach(cb=>cb.onchange=()=>{const a=S.annual.find(x=>x.id===cb.dataset.an);a.done=cb.checked;save();render();});
+}
+
+function vBanques(){
+  const k=S.period,r=rapproOf(k),rows=bankRows(k);
+  const tot=rows.reduce((a,b)=>({rel:a.rel+(+b.x.releve||0),cpt:a.cpt+(+b.x.compta||0)}),{rel:0,cpt:0});
+  $('#view').innerHTML=`
+    <section class="panel">
+      <h3>Rapprochements au ${fmtD(deadlineOf(k,0))} <span class="chip ${rows.every(b=>b.x.done)?'ok':'warn'}">${rows.filter(b=>b.x.done).length}/${rows.length} rapprochés</span></h3>
+      <p class="sub">Saisissez le solde du relevé et le solde comptable : l’écart se calcule seul. Un compte ne peut être validé qu’avec un écart nul ou une explication.</p>
+      <div class="scroll" style="margin-top:10px"><table class="ledger"><thead><tr><th>Compte</th><th class="r">Solde relevé</th><th class="r">Solde comptable</th><th class="r">Écart</th><th>Explication</th><th>Rapproché</th></tr></thead><tbody>
+      ${rows.map(b=>`<tr class="${b.x.done?'done':b.gap?'late':''}">
+        <td><b>${esc(b.name)}</b><div><span class="acct">${b.acct}</span></div></td>
+        <td class="r"><input type="number" class="num" data-bk="${b.id}" data-f="releve" value="${b.x.releve??''}" style="width:140px;text-align:right" aria-label="Solde relevé ${esc(b.name)}"></td>
+        <td class="r"><input type="number" class="num" data-bk="${b.id}" data-f="compta" value="${b.x.compta??''}" style="width:140px;text-align:right" aria-label="Solde comptable ${esc(b.name)}"></td>
+        <td class="r num ${b.gap?'bad-txt':'ok-txt'}">${b.gap==null?'—':b.gap===0?'0':money(b.gap)}</td>
+        <td><input type="text" data-bk="${b.id}" data-f="note" value="${esc(b.x.note||'')}" placeholder="Suspens, frais, chèques non encaissés…" style="width:100%;min-width:180px" aria-label="Explication ${esc(b.name)}"></td>
+        <td><div class="row-actions" style="flex-wrap:nowrap"><input type="checkbox" data-bkok="${b.id}" ${b.x.done?'checked':''} aria-label="Rapproché ${esc(b.name)}">${cbtn('bk:'+k+':'+b.id,'Rapprochement '+b.name)}</div></td></tr>`).join('')}
+      <tr><td><b>Total</b></td><td class="r num"><b>${money(tot.rel)}</b></td><td class="r num"><b>${money(tot.cpt)}</b></td><td class="r num ${tot.rel-tot.cpt?'bad-txt':'ok-txt'}"><b>${money(tot.rel-tot.cpt)}</b></td><td colspan="2"></td></tr>
+      </tbody></table></div>
+      <p class="note" id="bkMsg"></p>
+      <div class="addline"><input type="text" id="nbName" placeholder="Nouveau compte (ex. Orabank — compte courant)"><input type="text" id="nbAcct" placeholder="N° compte (521…)" style="flex:0 1 140px"><button class="btn sm" id="nbAdd">Ajouter le compte</button></div>
+    </section>`;
+  $$('#view input[data-bk]').forEach(inp=>inp.onchange=()=>{const x=r[inp.dataset.bk]=r[inp.dataset.bk]||{};const f=inp.dataset.f;
+    x[f]=f==='note'?inp.value.trim():(inp.value===''?null:+inp.value);save();render();});
+  $$('#view [data-bkok]').forEach(cb=>cb.onchange=()=>{const b=rows.find(x=>x.id===cb.dataset.bkok);const x=r[b.id]=r[b.id]||{};
+    if(cb.checked&&b.gap&&!x.note){cb.checked=false;$('#bkMsg').innerHTML=`<span class="bad-txt">${esc(b.name)} : écart de ${money(b.gap)}. Ajoutez une explication avant de valider.</span>`;return;}
+    x.done=cb.checked;logAct(`${b.name} : ${cb.checked?'rapproché':'rapprochement rouvert'}`,'bk:'+k+':'+b.id);save();render();toast(cb.checked?'Compte rapproché':'Rapprochement rouvert');});
+  bindCmts();
+  $('#nbAdd').onclick=()=>{const n=$('#nbName').value.trim();if(!n){$('#nbName').focus();return;}S.banks.push({id:'b'+uid(),name:n,acct:$('#nbAcct').value.trim()||'521'});save();render();toast('Compte ajouté');};
+}
+
+function vComptes(){
+  const rs=reviewStats();
+  const sorted=S.review.slice().sort((a,b)=>(a.status==='soldé')-(b.status==='soldé')||ageDays(b.since)-ageDays(a.since));
+  $('#view').innerHTML=`
+    <div class="grid g3">
+      ${stat('Montant à justifier',mshort(rs.total)+' F',`${rs.open.length} compte(s) ouverts`,'','comptes')}
+      ${stat('Plus de 90 jours',rs.old.length,mshort(rs.old.reduce((a,r)=>a+(+r.solde||0),0))+' FCFA',rs.old.length?'bad':'ok','comptes')}
+      ${stat('Comptes soldés',S.review.filter(r=>r.status==='soldé').length,'régularisés et justifiés','ok','comptes')}
+    </div>
+    <section class="panel" style="margin-top:14px">
+      <h3>Comptes à justifier et soldes anormaux</h3>
+      <p class="sub">Comptes d’attente, FNP anciennes, soldes de sens anormal. Classés par ancienneté : ce que le commissaire aux comptes regardera en premier.</p>
+      <div class="scroll" style="margin-top:10px"><table class="ledger"><thead><tr><th>Compte</th><th class="r">Solde (FCFA)</th><th class="r">Ancienneté</th><th>Action</th><th>Responsable</th><th>Statut</th></tr></thead><tbody>
+      ${sorted.map(r=>{const a=ageDays(r.since);return `<tr class="${r.status==='soldé'?'done':a>90?'late':''}">
+        <td><span class="acct">${esc(r.acct)}</span><div class="t" style="margin-top:3px">${esc(r.lbl)}</div></td>
+        <td class="r"><input type="number" class="num" data-rv="${r.id}" data-f="solde" value="${r.solde}" style="width:130px;text-align:right" aria-label="Solde ${esc(r.acct)}"></td>
+        <td class="r num ${a>90?'bad-txt':a>60?'warn-txt':''}">${a} j</td>
+        <td><input type="text" data-rv="${r.id}" data-f="action" value="${esc(r.action)}" style="width:100%;min-width:200px" aria-label="Action ${esc(r.acct)}"></td>
+        <td><select data-rv="${r.id}" data-f="owner" aria-label="Responsable ${esc(r.acct)}">${S.team.map(m=>`<option value="${m.id}" ${r.owner===m.id?'selected':''}>${esc(m.name)}</option>`).join('')}</select></td>
+        <td><div class="row-actions" style="flex-wrap:nowrap"><select data-rv="${r.id}" data-f="status" aria-label="Statut ${esc(r.acct)}">${['à faire','en cours','soldé'].map(s=>`<option ${r.status===s?'selected':''}>${s}</option>`).join('')}</select>${cbtn('rv:'+r.id,r.acct+' — '+r.lbl)}</div></td></tr>`;}).join('')}
+      </tbody></table></div>
+      <div class="addline"><input type="text" id="nrAcct" placeholder="Compte (ex. 4711)" style="flex:0 1 120px"><input type="text" id="nrLbl" placeholder="Libellé"><input type="number" id="nrSolde" placeholder="Solde" style="flex:0 1 130px"><button class="btn sm" id="nrAdd">Ajouter</button></div>
+    </section>`;
+  $$('#view [data-rv]').forEach(el=>el.onchange=()=>{const r=S.review.find(x=>x.id===el.dataset.rv);const f=el.dataset.f;r[f]=f==='solde'?(+el.value||0):el.value;if(f==='status')logAct(`Compte ${r.acct} : ${el.value}`,'rv:'+r.id);if(f==='owner')logAct(`Compte ${r.acct} confié à ${member(el.value).name}`);save();render();if(f==='status'&&el.value==='soldé')toast('Compte soldé');});
+  bindCmts();
+  $('#nrAdd').onclick=()=>{const a=$('#nrAcct').value.trim(),l=$('#nrLbl').value.trim();if(!a||!l){(a?$('#nrLbl'):$('#nrAcct')).focus();return;}
+    S.review.push({id:'r'+uid(),acct:a,lbl:l,solde:+$('#nrSolde').value||0,since:isoD(today()),owner:'me',action:'',status:'à faire'});save();render();toast('Compte ajouté');};
+}
+
+let confirmDel=null;
+function vAudit(){
+  const st=['à préparer','en cours','transmis'];
+  const n=s=>S.cac.filter(c=>c.status===s).length;
+  const rows=S.cac.slice().sort((a,b)=>(a.status==='transmis')-(b.status==='transmis')||a.due.localeCompare(b.due));
+  $('#view').innerHTML=`
+    <div class="grid g3">${stat('À préparer',n('à préparer'),'demandes du commissaire aux comptes',n('à préparer')?'warn':'ok','audit')}${stat('En cours',n('en cours'),'en préparation par l’équipe','','audit')}${stat('Transmis',n('transmis'),'au commissaire aux comptes','ok','audit')}</div>
+    <section class="panel" style="margin-top:14px">
+      <h3>Liste des documents demandés (PBC)</h3>
+      <p class="sub">Préparer l’audit des comptes annuels au fil de l’année plutôt qu’en janvier.</p>
+      <div class="scroll" style="margin-top:10px"><table class="ledger"><thead><tr><th>Document</th><th>Échéance</th><th>Statut</th></tr></thead><tbody>
+      ${rows.map(c=>`<tr class="${c.status==='transmis'?'done':daysTo(c.due)<0?'late':''}"><td class="t">${esc(c.item)}</td><td class="num">${fmtD(c.due)}</td>
+        <td><div class="row-actions" style="flex-wrap:nowrap"><select data-cac="${c.id}" aria-label="Statut">${st.map(s=>`<option ${c.status===s?'selected':''}>${s}</option>`).join('')}</select>${cbtn('ca:'+c.id,c.item)}</div></td></tr>`).join('')}
+      </tbody></table></div>
+      <div class="addline"><input type="text" id="caItem" placeholder="Document demandé"><input type="date" id="caDue" aria-label="Échéance"><button class="btn sm" id="caAdd">Ajouter</button></div>
+    </section>`;
+  $$('#view [data-cac]').forEach(s=>s.onchange=()=>{const c=S.cac.find(x=>x.id===s.dataset.cac);c.status=s.value;logAct(`Audit « ${c.item} » : ${s.value}`,'ca:'+c.id);save();render();});
+  bindCmts();
+  $('#caAdd').onclick=()=>{const i=$('#caItem').value.trim();if(!i){$('#caItem').focus();return;}S.cac.push({id:'c'+uid(),item:i,due:$('#caDue').value||isoD(today()),status:'à préparer'});save();render();toast('Demande ajoutée');};
+}
+
+function reportText(){
+  const k=S.period,cs=closingStats(k),fr=fiscalRows(k),br=bankRows(k),rs=reviewStats(),ts=taskStats();
+  const per=plabel(k).toLowerCase();
+  const L=[];
+  L.push(`Objet : reporting comptable — clôture de ${per}`);
+  L.push('À l’attention du Directeur financier et comptable');
+  L.push(`Situation au ${fmtD(isoD(today()))}${S.company?' · '+S.company:''}`);
+  const x=kpis(k),pp=kpis(pshift(k,-1));
+  if(x){L.push('');L.push('Chiffres clés (millions de FCFA)');
+    L.push(`- Chiffre d’affaires : ${M(x.ca)} (budget ${M(x.budget)}, écart ${P(x.ecartBudget)}) ; cumul ${M(cumul(k,'ca'))} vs budget ${M(cumul(k,'budget'))}.`);
+    L.push(`- EBE : ${M(x.ebe)} soit ${P(x.tEbe)} du CA ; résultat courant avant impôt : ${M(x.rcai)}.`);
+    L.push(`- Trésorerie nette : ${M(x.treso)}${pp?` (${x.treso>=pp.treso?'+':'−'}${M(Math.abs(x.treso-pp.treso))} sur le mois)`:''} ; BFR : ${M(x.bfr)}.`);
+    L.push(`- Délais : clients ${J(x.dso)}, fournisseurs ${J(x.dpo)}, stocks ${J(x.dsi)}.`);
+    const at=attention(k).filter(a=>a.lvl!=='ok');if(at.length){L.push('');L.push('Constats de la clôture');at.forEach(a=>L.push(`- ${a.t}.${a.act?' Action comptable : '+a.act:''}`));}
+    const dd=attention(k).filter(a=>a.dfc);if(dd.length){L.push('');L.push('Points remontés pour votre analyse ou décision');dd.forEach(a=>L.push(`- ${a.dfc}`));}}
+  L.push('');
+  L.push(`1. Clôture comptable`);
+  L.push(`Avancement : ${cs.done}/${cs.total} points (${cs.pct} %). Objectif J+${S.target} : ${fmtD(cs.target)}.`);
+  if(cs.open.length)L.push('Points restants : '+cs.open.map(i=>`${i.t} (${member(ownerOf(k,i)).name}${daysTo(i.due)<0?', en retard':''})`).join(' ; ')+'.');
+  else L.push('Tous les points de clôture sont réalisés.');
+  L.push('');
+  L.push(`2. Fiscalité et social`);
+  const fd=fr.filter(r=>r.s.done),fo=fr.filter(r=>!r.s.done);
+  if(fd.length)L.push(`Déposées : ${fd.map(r=>`${r.code}${r.s.amount?' '+money(r.s.amount)+' F':''}`).join(', ')}.`);
+  if(fo.length)L.push(`Restent à déposer : ${fo.map(r=>`${r.code} avant le ${fmtDs(r.due)}`).join(', ')}.`);
+  const tf=fr.reduce((a,r)=>a+(+r.s.amount||0),0);if(tf)L.push(`Total des impôts et cotisations de la période : ${money(tf)} FCFA.`);
+  L.push('');
+  L.push(`3. Trésorerie`);
+  L.push(`${br.filter(b=>b.x.done).length}/${br.length} comptes rapprochés. Solde total des relevés : ${money(br.reduce((a,b)=>a+(+b.x.releve||0),0))} FCFA.`);
+  br.filter(b=>b.gap).forEach(b=>L.push(`Écart de ${money(b.gap)} F sur ${b.name}${b.x.note?' : '+b.x.note:''}.`));
+  L.push('');
+  L.push(`4. Comptes à justifier`);
+  L.push(`${rs.open.length} compte(s) pour ${money(rs.total)} FCFA, dont ${rs.old.length} de plus de 90 jours.`);
+  rs.old.forEach(r=>L.push(`- ${r.acct} ${r.lbl} : ${money(r.solde)} F (${ageDays(r.since)} j) — ${r.action||'action à définir'}.`));
+  L.push('');
+  L.push(`5. Équipe`);
+  L.push(`${ts.open.length} tâche(s) en cours${ts.late.length?', dont '+ts.late.length+' en retard : '+ts.late.map(t=>t.title+' ('+member(t.owner).name+')').join(' ; '):''}.`);
+  const cacOpen=S.cac.filter(c=>c.status!=='transmis');
+  if(cacOpen.length){L.push('');L.push(`6. Préparation de l’audit`);L.push(`${cacOpen.length} document(s) à remettre au commissaire aux comptes ; prochain : ${cacOpen.sort((a,b)=>a.due.localeCompare(b.due))[0].item} (${fmtD(cacOpen[0].due)}).`);}
+  L.push('');
+  L.push(S.me?S.me+'\nChef comptable':'Le chef comptable');
+  return L.join('\n');
+}
+function vPlan(){
+  const cols=[['30','Comprendre et sécuriser'],['60','Structurer'],['90','Fiabiliser et automatiser']];
+  const all=Object.values(S.plan).flat();const d=all.filter(x=>x.d).length;
+  $('#view').innerHTML=`
+    <section class="panel" style="margin-bottom:14px">
+      <h3>Mes 90 premiers jours comme chef comptable <span class="chip neutral">${d}/${all.length}</span></h3>
+      <p class="sub">Objectif : des comptes fiables à J+${S.target}, des alertes remontées tôt au DFC et un dossier prêt pour l’audit. L’analyse et les décisions financières restent à la Direction financière.</p>
+    </section>
+    <div class="grid g3">${cols.map(([k,l])=>`<section class="panel plan-col"><h3>${k} jours <small>${l}</small></h3>
+      <div style="margin-top:10px">${S.plan[k].map((p,i)=>`<div class="pitem ${p.d?'done':''}"><input type="checkbox" id="pl-${k}-${i}" data-pl="${k}" data-i="${i}" ${p.d?'checked':''}><label for="pl-${k}-${i}">${esc(p.t)}</label></div>`).join('')}</div>
+      <div class="addline"><input type="text" id="pla-${k}" placeholder="Ajouter une action"><button class="btn sm" data-pladd="${k}">Ajouter</button></div></section>`).join('')}</div>`;
+  $$('#view [data-pl]').forEach(cb=>cb.onchange=()=>{S.plan[cb.dataset.pl][+cb.dataset.i].d=cb.checked;save();render();});
+  $$('#view [data-pladd]').forEach(b=>b.onclick=()=>{const k=b.dataset.pladd,i=$('#pla-'+k);const t=i.value.trim();if(!t){i.focus();return;}S.plan[k].push({t,d:false});save();render();});
+}
+
+let resetAsk=false;
+function vReglages(){
+  $('#view').innerHTML=`
+    <div class="grid g2">
+      <section class="panel">
+        <h3>Identité</h3>
+        <div style="display:grid;gap:10px;margin-top:12px">
+          <label>Entreprise<br><input type="text" id="sCompany" value="${esc(S.company)}" placeholder="Nom de l’entreprise" style="width:100%"></label>
+          <label>Votre nom<br><input type="text" id="sMe" value="${esc(S.me)}" placeholder="Prénom Nom" style="width:100%"></label>
+          <label>Objectif de clôture (jours après la fin du mois)<br><input type="number" id="sTarget" min="3" max="30" value="${S.target}" style="width:100px"></label>
+          <label>Couleur de l’entreprise<br><span class="row-actions"><input type="color" id="sBrand" value="${S.brand||'#13804b'}" style="width:56px;height:34px;padding:2px;border:1px solid var(--rule);border-radius:7px;background:var(--sheet)"><button class="btn sm" id="sBrandReset" type="button">Vert par défaut</button></span></label>
+        </div>
+      </section>
+      <section class="panel">
+        <h3>Équipe</h3>
+        <div style="display:grid;gap:8px;margin-top:12px">${S.team.map(m=>`<div class="addline" style="margin:0"><input type="text" data-tm="${m.id}" data-f="name" value="${esc(m.name)}" style="flex:0 1 130px" aria-label="Nom"><input type="text" data-tm="${m.id}" data-f="role" value="${esc(m.role)}" aria-label="Rôle"></div>`).join('')}</div>
+      </section>
+      <section class="panel">
+        <h3>Obligations mensuelles</h3>
+        <p class="sub">Jour d’échéance dans le mois suivant la période.</p>
+        <table class="ledger" style="margin-top:8px"><tbody>${S.fiscalDef.map((o,i)=>`<tr><td><input type="text" data-fd="${i}" data-f="lbl" value="${esc(o.lbl)}" style="width:100%" aria-label="Libellé"></td><td style="width:90px"><input type="number" min="1" max="31" data-fd="${i}" data-f="day" value="${o.day}" style="width:70px" aria-label="Jour"></td></tr>`).join('')}</tbody></table>
+        <div class="addline"><input type="text" id="nfLbl" placeholder="Autre obligation (ex. Timbres)"><button class="btn sm" id="nfAdd">Ajouter</button></div>
+      </section>
+      <section class="panel">
+        <h3>Installer sur cet appareil</h3>
+        <div class="sub" style="line-height:1.6">${standalone()?'<span class="ok-txt">✓ L’application est installée sur cet appareil.</span>':
+          `<b>Android (Chrome)</b> : bouton « Installer l’application » en haut, ou menu ⋮ → « Installer l’application ».<br>
+           <b>iPhone (Safari)</b> : bouton Partager → « Sur l’écran d’accueil ».<br>
+           <b>Ordinateur (Chrome, Edge)</b> : icône d’installation à droite de la barre d’adresse.`}</div>
+      </section>
+      <section class="panel">
+        <h3>Données</h3>
+        <p class="sub">Les données sont enregistrées dans ce navigateur. Les données d’exemple peuvent être rétablies à tout moment.</p>
+        <div class="row-actions" style="margin-top:12px">${resetAsk?`<span class="confirm">Remplacer toutes vos saisies par les exemples ? <button class="btn sm danger" id="rsYes">Rétablir</button><button class="btn sm" id="rsNo">Annuler</button></span>`:'<button class="btn sm danger" id="rsAsk">Rétablir les données d’exemple</button>'}</div>
+      </section>
+    </div>`;
+  $('#sCompany').onchange=e=>{S.company=e.target.value.trim();save();header();toast('Enregistré');};
+  $('#sMe').onchange=e=>{S.me=e.target.value.trim();save();header();toast('Enregistré');};
+  $('#sBrand').oninput=e=>{S.brand=e.target.value;applyBrand();};$('#sBrand').onchange=()=>{save();toast('Couleur enregistrée');};
+  $('#sBrandReset').onclick=()=>{S.brand='';applyBrand();save();render();};
+  $('#sTarget').onchange=e=>{S.target=Math.min(30,Math.max(3,+e.target.value||10));save();render();};
+  $$('#view [data-tm]').forEach(i=>i.onchange=()=>{S.team.find(m=>m.id===i.dataset.tm)[i.dataset.f]=i.value.trim();save();toast('Équipe mise à jour');});
+  $$('#view [data-fd]').forEach(i=>i.onchange=()=>{const o=S.fiscalDef[+i.dataset.fd];o[i.dataset.f]=i.dataset.f==='day'?Math.min(31,Math.max(1,+i.value||15)):i.value.trim();save();toast('Obligation mise à jour');});
+  $('#nfAdd').onclick=()=>{const l=$('#nfLbl').value.trim();if(!l){$('#nfLbl').focus();return;}S.fiscalDef.push({code:l.toUpperCase().slice(0,12),lbl:l,day:15,kind:'Fiscal'});save();render();};
+  const a=$('#rsAsk');if(a)a.onclick=()=>{resetAsk=true;render();};
+  const y=$('#rsYes');if(y)y.onclick=()=>{S=seed();resetAsk=false;save();render();toast('Données d’exemple rétablies');};
+  const n=$('#rsNo');if(n)n.onclick=()=>{resetAsk=false;render();};
+}
+
+/* ===================== Installation (PWA) ===================== */
+function standalone(){try{return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;}catch(e){return false;}}
+let installEvt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;$('#installBtn').hidden=false;});
+window.addEventListener('appinstalled',()=>{installEvt=null;$('#installBtn').hidden=true;toast('Application installée');});
+$('#installBtn').onclick=async()=>{if(!installEvt)return;installEvt.prompt();try{await installEvt.userChoice;}catch(e){}installEvt=null;$('#installBtn').hidden=true;};
+if('serviceWorker' in navigator&&location.protocol==='https:'&&window.self===window.top){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}
+
+render();
+</script>
+
+</body>
+</html>
